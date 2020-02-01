@@ -1,0 +1,7 @@
+@tailwind base;
+/* CSS custom global styles should be added here
+ Component specific styles can be added directly into the .vue
+ file between <style scoped></style>
+*/
+@tailwind components;
+@tailwind utilities;
