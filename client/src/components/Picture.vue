@@ -1,14 +1,16 @@
 <template>
-  <div class="lightbox" @click.self="closeLightbox">
-    <div class="nav-img" @click.self="showPicture(picture.id, -1)"><</div>
-    <img v-if="picture.filename" :src="pictureUrl(picture.filename)">
-    <div class="nav-img" @click.self="showPicture(picture.id, 1)">></div>
-    <div class="lightbox-info">
-      <div class="lightbox-info-inner">
-        <span class="lightbox-title" v-if="picture.title">{{ picture.title }}</span>
-        <p v-if="picture.information" v-html="picture.information"></p>
+  <div class="lightbox fixed w-screen h-screen xl:p-16 xl:px-48 lg:p-10 lg:px-24 md:p-6 md:px-20 p-4 px-16 top-0 left-0" @click.self="closeLightbox">
+    <div class="lb-container w-full h-full flex lg:flex-row flex-col justify-center">
+      <div class="overflow-hidden flex-1 flex-grow max-w-full max-h-full bg-gray-300 bg-contain bg-no-repeat lb-picture rounded-l" v-bind:style="{ backgroundImage: 'url(' + pictureUrl(picture.filename) + ')' }">
+      </div>
+      <div class="lb-information bg-white flex-1 xl:max-w-md lg:max-w-xs w-full border border-solid border-gray-300 text-center p-4 px-8 overflow-auto rounded-r">
+        <span class="lightbox-title font-bold text-4xl" v-if="picture.title">{{ picture.title }}</span>
+        <p class="mt-4" v-if="picture.information" v-html="picture.information"></p>
       </div>
     </div>
+    <div class="lb-chevron-left" @click.self="showPicture(picture.id, -1)"></div>
+    <div class="lb-chevron-right" @click.self="showPicture(picture.id, 1)"></div>
+    <div class="lb-cross" @click.self="closeLightbox"></div>
   </div>
 </template>
 
@@ -67,18 +69,9 @@ export default {
 
 <style>
   .lightbox {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    display: grid;
-    grid-template-columns: 5px 20fr 5px 10fr;
-    grid-gap: 4rem;
-    padding: 0px 4rem;
+    background-color: rgba(0, 0, 0, 0.5);
   }
-
+/*
   .lightbox img {
     margin: auto;
     width: 100%;
@@ -107,5 +100,38 @@ export default {
     font-size:30px;
     font-weight:bold;
     margin:15px;
+  }*/
+  .lb-picture{
+    background-position: 50% 50%;
+  }
+
+  .lb-chevron-left{
+    position:fixed;
+    top: 50%;
+    left:15px;
+    height:32px;
+    width:32px;
+    background: url('../assets/icons/chevron-left.png');
+    cursor:pointer;
+  }
+
+  .lb-chevron-right{
+    position:fixed;
+    top: 50%;
+    right:15px;
+    height:32px;
+    width:32px;
+    background: url('../assets/icons/chevron-right.png');
+    cursor:pointer;
+  }
+
+  .lb-cross{
+    position:fixed;
+    top:15px;
+    right:15px;
+    height:32px;
+    width:32px;
+    background: url('../assets/icons/cross.png');
+    cursor:pointer;
   }
 </style>
