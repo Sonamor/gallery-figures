@@ -11,7 +11,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "npx elsint . --fix",
-    "start": "node ./server/app.js"
+    "start": "node server/app.js"
   },
   "keywords": [],
   "author": "",
