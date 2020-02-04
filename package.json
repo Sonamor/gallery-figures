@@ -11,7 +11,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "npx elsint . --fix",
-    "heroku-prebuild": "cd server && node app.js",
+    "heroku-prebuild": "cd server",
     "start": "node app.js"
   },
   "keywords": [],
