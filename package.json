@@ -12,7 +12,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "npx elsint . --fix",
     "heroku-prebuild": "cd server",
-    "start": "cd server && node app.js"
+    "start": "cd server && npm start"
   },
   "keywords": [],
   "author": "",
