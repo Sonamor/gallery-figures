@@ -1,21 +1,37 @@
 <template>
   <div class="gallery">
+    <div class="rounded overflow-hidden shadow-lg" v-show="user != false">
+      <router-link to="/picture/add" @click.self="addPicture">
+        <div class="bg-white p-16 hover:bg-gray-400">
+          <img src="../assets/icons/xl-plus.png" class="lg-plus" title="Ajouter une image" alt="Ajouter une image">
+        </div>
+      </router-link>
+    </div>
     <div
          v-bind:class="['gallery__item', picture.size, 'rounded overflow-hidden shadow-lg']"
          v-for="picture in pictures"
-         :key="picture.id">
-      <router-link :to="`/picture/${picture.id}`">
-        <div class="flex flex-col h-full">
+         :key="picture.id"
+          @mouseover="picture.hover = true"
+          @mouseleave="picture.hover = false">
+      <div class="flex flex-col h-full bg-white relative">
+        <div class="gallery__actions"
+          v-show="user != false && picture.hover === true" >
+          <img class="action__edit" src="../assets/icons/edit.png" @click.self="editPicture(picture.id)">
+          <img class="action__hide" src="../assets/icons/hide.png" @click.self="hidePicture(picture.id, picture)">
+          <img class="action__cross" src="../assets/icons/cross.png" @click.self="deletePicture(picture.id)">
+        </div>
+        <router-link :to="`/picture/${picture.id}`">
           <img :src="thumbUrl(picture.filename)" class="gallery__img w-full" :title="picture.title" :alt="picture.title">
-          <div class="px-4 py-2">
+          <div v-bind:class="['px-4 py-2', (picture.active === false ? 'bg-red-300': 'bg-white')]">
             <div class="font-bold text-base mb-1">{{ picture.title }}</div>
             <p class="text-gray-700 text-xs truncate">
               {{ picture.information }}
             </p>
           </div>
-        </div>
-      </router-link>
+        </router-link>
+      </div>
     </div>
+    -{{user}}-
   </div>
 </template>
 
@@ -31,6 +47,7 @@ export default {
     return {
       pictures: [],
       doneLoading: false,
+      user: this.$root.user,
     };
   },
   watch: {
@@ -48,8 +65,12 @@ export default {
       return require(`../assets/thumbnails/${filename}`);
     },
     fetchPictures() {
-      axios.get('/pictures.api').then((response) => {
+      axios.get('http://localhost:3000/api/pictures').then((response) => {
         this.pictures = response.data;
+        this.pictures.forEach((picture) => {
+          this.$set(picture, 'hover', 'false');
+          picture.hover = 'false';
+        });
       });
     },
     gridElementClass(pictureSize) {
@@ -70,14 +91,39 @@ export default {
       pictureSizeClass = '';
       return pictureSizeClass;
     },
-    gridElementClassBis(pictureId) {
-      return `gallery__item--${pictureId + 1}`;
-    },
 
     listenToEvents() {
       bus.$on('refreshPicture', () => {
         this.fetchPictures(); // update pictures
       });
+    },
+
+    editPicture() {
+      console.log('editPicture');
+      // route vers la page picture/:id#edit
+    },
+
+    hidePicture(pictureId, picture) {
+      console.log('hidePicture');
+      // Update picture avec visibility = none et refresh en affichant cette image en grisée
+      picture.active = !picture.active;
+      axios.put(`http://localhost:3000/api/picture/${pictureId}`, picture).then((response) => {
+        if (response.status === 200) {
+          // this.pictures = this.pictures.filter(obj => obj.id !== pictureId);
+          console.log(response.data.success);
+        }
+      });
+    },
+
+    deletePicture(pictureId) {
+      // Pop-up confirmation de suppression, si oui on envoie un delete sur /picture/:id
+      if (confirm('Etes-vous sûr de vouloir supprimer cette image ?')) {
+        axios.delete(`http://localhost:3000/api/picture/${pictureId}`).then((response) => {
+          if (response.status === 200) {
+            this.pictures = this.pictures.filter(obj => obj.id !== pictureId);
+          }
+        });
+      }
     },
   },
 };
@@ -85,6 +131,9 @@ export default {
 
 <style>
 
+body {
+  background: #2d3748;
+}
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -94,7 +143,7 @@ export default {
   padding: 0;
   max-width: 80%;
 }
-.gallery__item img {
+.gallery__img {
   display: block;
   object-fit: cover;
   width: 100%;
@@ -109,4 +158,31 @@ export default {
   grid-row-end: span 3;
 }
 
+.lg-plus{
+  width:64px;
+  height:64px;
+}
+
+.gallery__actions{
+  position:absolute;
+  background:white;
+  top:0px;
+  right:0px;
+  padding:5px 5px;
+  border-bottom-left-radius: 0.25rem;
+  border:1px solid #b3b3b3;
+  border-top:0px;
+  border-right:0px;
+}
+
+.action__edit, .action__hide, .action__cross{
+  width:16px;
+  height:16px;
+  margin-top:10px;
+  margin-bottom:10px;
+  cursor:pointer;
+}
+.action__edit:hover, .action__hide:hover, .action__cross:hover{
+  background: rgba(0, 119, 255, 0.2);
+}
 </style>

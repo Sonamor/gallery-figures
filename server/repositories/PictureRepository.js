@@ -7,8 +7,8 @@ class PictureRepository {
   }
 
   // Create a new picture
-  create(id, title, filename, information, creation_date) {
-    const newPicture = { id, title, filename, information, creation_date };
+  create(id, title, filename, information, creation_date, size, active) {
+    const newPicture = { id, title, filename, information, creation_date, size, active };
     const picture = new this.model(newPicture);
 
     return picture.save();
@@ -29,10 +29,25 @@ class PictureRepository {
     return this.model.findByIdAndDelete(id);
   }
 
+  deleteByField(keyValue){
+    return this.model.deleteOne(keyValue, function (err) {
+      if (err) return handleError(err);
+      // deleted at most one tank document
+    });
+  }
+
   // Update picture
-  updateById(id, object) {
-    const query = { _id: id };
-    return this.model.findOneAndUpdate(query, { $set: { title: object.title, filename: object.filename, information: object.information, creation_date: object.creation_date } });
+  async updateById(truc, object) {
+
+    let doc = await this.model.findOne({ id: truc });
+
+    doc.title = object.title;
+    doc.filename = object.filename;
+    doc.information = object.information;
+    doc.creation_date = object.creation_date;
+    doc.active = object.active;
+
+    return await doc.save();
   }
 }
 

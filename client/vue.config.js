@@ -4,9 +4,9 @@ module.exports = {
       locale: 'en',
       fallbackLocale: 'en',
       localeDir: 'locales',
-      enableInSFC: false
-    }
+      enableInSFC: false,
+    },
   },
   runtimeCompiler: false,
-  outputDir: '../server/public'
-}
+  outputDir: '../server/public',
+};

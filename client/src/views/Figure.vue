@@ -5,7 +5,7 @@
 import Gallery from '@/components/Gallery.vue';
 
 export default {
-  name: 'home',
+  name: 'Figure',
   components: {
     Gallery,
   },

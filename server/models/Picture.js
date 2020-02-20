@@ -18,6 +18,12 @@ const pictureSchema = new Schema({
   },
   creation_date: {
     type: Date,
+  },
+  size: {
+    type: String,
+  },
+  active: {
+    type: Boolean,
   }
 });
 
