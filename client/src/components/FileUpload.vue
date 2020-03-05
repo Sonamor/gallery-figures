@@ -1,8 +1,14 @@
 <template>
   <div class="px-4 py-2">
+    <div v-bind:class="getClass()" role="alert" v-if="message != ''">
+      <span class="block sm:inline">{{ message }}</span>
+      <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
+        <svg @click="message = ''" class="fill-current h-6 w-6" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
+      </span>
+    </div>
     <form enctype="multipart/form-data" @submit.prevent="onSubmit">
       <div class="fields">
-          <div class="w-full font-bold">Nouvelle image</div>
+          <div class="w-full font-bold m-1 text-gray-500">Nouvelle image</div>
           <!--<input type="file" ref="file" @change="onSelect" class="mt-2">-->
           <input
             ref="input"
@@ -136,13 +142,7 @@
           </div>
       </div>
       <div class="fields" v-if="imgSrc !== ''">
-        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold px-2 rounded focus:outline-none focus:shadow-outline mt-4">Valider</button>
-      </div>
-      <div v-bind:class="getClass()" role="alert" v-if="message != ''">
-        <span class="block sm:inline">{{ message }}</span>
-        <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
-          <svg @click="message = ''" class="fill-current h-6 w-6" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
-        </span>
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold px-2 rounded focus:outline-none focus:shadow-outline mt-4 ml-1">Valider</button>
       </div>
     </form>
   </div>
@@ -221,8 +221,10 @@ export default {
         reader.onload = (event) => {
           this.imgSrc = event.target.result;
           // rebuild cropperjs with the updated source
-          // this.$refs.cropper.replace(event.target.result);
+          console.log(event);
+          this.$refs.cropper.replace(event.target.result);
         };
+        console.log('lol');
         reader.readAsDataURL(file);
       } else {
         alert('Sorry, FileReader API not supported');
@@ -251,7 +253,7 @@ export default {
     async onSubmit() {
       await this.$refs.cropper.getCroppedCanvas().toBlob(async (blob) => {
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-        console.log(this.$refs);
+
         const file = this.$refs.input.files[0];
         this.file = file;
         if (!allowedTypes.includes(file.type)) {
@@ -269,7 +271,6 @@ export default {
         formData.append('file', blob, this.file.name);
         // formData.append('file', this.file);
 
-        console.log(blob);
         try {
           await axios.post('http://localhost:3000/api/upload', formData);
           this.message = 'Image sauvegardée';
@@ -278,32 +279,7 @@ export default {
           this.message = err.response.data.error;
           this.hasError = true;
         }
-        // Use `jQuery.ajax` method for example
-        /* $.ajax('/path/to/upload', {
-          method: "POST",
-          data: formData,
-          processData: false,
-          contentType: false,
-          success() {
-            console.log('Upload success');
-          },
-          error() {
-            console.log('Upload error');
-          },
-        }); */
       });
-
-      /* const formData = new FormData();
-      formData.append('file', this.file);
-
-      try {
-        await axios.post('http://localhost:3000/api/upload', formData);
-        this.message = 'Image sauvegardée';
-        this.$emit('uploadedFile', this.file.name);
-      } catch (err) {
-        this.message = err.response.data.error;
-        this.hasError = true;
-      } */
     },
     getClass() {
       return {

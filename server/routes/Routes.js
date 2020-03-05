@@ -97,36 +97,59 @@ app.get('/pictures', (req, res) => {
 
 // add a picture item
 app.post('/pictures', (req, res) => {
-  const id = '12';
-  const title = req.body.title;
-  const filename = req.body.filename;
-  const information = req.body.information;
-  const size = req.body.size;
-  const active = true;
 
-  var today = new Date();
-  var dd = today.getDate();
-  var mm = today.getMonth()+1; //January is 0!
-  var yyyy = today.getFullYear();
-  var h = today.getHours();
-  var i = today.getMinutes();
-  var s = today.getSeconds();
+  (async () => {
+    let picId = 0;
 
-  if(dd<10) {
-      dd = '0'+dd
-  }
+    const mode = req.body.mode;
 
-  if(mm<10) {
-      mm = '0'+mm
-  }
+    if(mode === 'add'){
+      await repository.getLastPicture().then((lastPicture) => {
+        picId = Number(lastPicture[0].id) + 1;
+      });
+    } else {
+      picId = req.body.id;
+    }
 
-  today = yyyy + '-' + mm + '-' + dd + ' ' + h + ':' + i + ':' + s;
+    const id = picId;
+    const title = req.body.title;
+    const filename = req.body.filename.replace(/ /g,"_");
+    const information = req.body.information;
+    const size = req.body.size;
+    const active = true;
 
-  const creation_date = today;
+    var today = new Date();
+    var dd = today.getDate();
+    var mm = today.getMonth() + 1; //January is 0!
+    var yyyy = today.getFullYear();
+    var h = today.getHours();
+    var i = today.getMinutes();
+    var s = today.getSeconds();
 
-  repository.create(id, title, filename, information, creation_date, size, active).then((picture) => {
-    res.send({ success : true, message: "Image Ajoutée" });
-  }).catch((error) => console.log(error));
+    if(dd<10) {
+        dd = '0'+dd
+    }
+
+    if(mm<10) {
+        mm = '0'+mm
+    }
+
+    today = yyyy + '-' + mm + '-' + dd + ' ' + h + ':' + i + ':' + s;
+
+    const creation_date = today;
+
+    if(mode === 'add'){
+      await repository.create(id, title, filename, information, creation_date, size, active).then((picture) => {
+        res.send({ success : true, file_id: id });
+      }).catch((error) => console.log(error));
+    }
+
+    if(mode === 'edit'){
+      await repository.updateById(id, {title: title, filename: filename, information: information, creation_date: creation_date, size: size, active: active}).then((picture) => {
+        res.send({ success : true, file_id: id });
+      }).catch((error) => console.log(error));
+    }
+  })();
 });
 
 // delete a picture item
@@ -166,13 +189,14 @@ const fileFilter = (req, file, cb) =>{
 
   cb(null, true);
 }
+
 const multer = require('multer');
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, './uploads')
   },
   filename: function (req, file, cb) {
-    let filename = file.originalname;
+  let filename = file.originalname.replace(/ /g,"_");
     cb(null, filename)
   }
 })
@@ -195,9 +219,29 @@ app.use((err, req, res, next) => {
     return;
   }
 })
+const resizeOptimizeImages = require('resize-optimize-images');
+const fs = require('fs');
 // update a picture item
 app.post('/upload', upload.single('file'), (req, res) => {
-  console.log(req.file);
-  res.json({ file: req.file });
+
+  const filename = req.file.filename.replace(/ /g,"_");
+
+  // destination.txt will be created or overwritten by default.
+  fs.copyFile('./uploads/' + filename, './uploads/thumbnails/' + filename, (err) => {
+    if (err) throw err;
+    console.log('source.txt was copied to destination.txt');
+    (async () => {
+      // Set the options.
+      const options = {
+        images: ['./uploads/thumbnails/' + filename],
+        width: 480,
+        quality: 90
+      };
+
+      // Run the module.
+      await resizeOptimizeImages(options);
+    })();
+  });
+  res.send({ success : true, message: "Image téléchargée" });
 });
 module.exports = app;

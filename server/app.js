@@ -38,9 +38,9 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-/*app.use(history({
+app.use(history({
   verbose: true
-}))*/
+}))
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(flash());

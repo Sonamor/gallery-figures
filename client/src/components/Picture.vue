@@ -1,32 +1,47 @@
 <template>
   <div class="lightbox fixed w-screen h-screen xl:p-16 xl:px-48 lg:p-10 lg:px-24 md:p-6 md:px-20 p-4 px-16 top-0 left-0" @click.self="closeLightbox">
     <div class="lb-container w-full h-full flex lg:flex-row flex-col justify-center">
-      <div class="overflow-hidden flex-1 flex-grow max-w-full max-h-full bg-gray-300 bg-contain bg-no-repeat lb-picture rounded-l" v-if="['edit', 'show'].includes(mode)" v-bind:style="{ backgroundImage: 'url(' + (picture ? pictureUrl(picture.filename) : '') + ')' }">
+      <div class="overflow-x-auto flex-1 flex-grow max-w-full max-h-full bg-white rounded relative text-center relative" v-if="(typeof this.picture === 'undefined')">
+        <div class="absolute top30 w-full">
+          <span class="w-full text-6xl text-blue-500 font-bold inline-block">404</span>
+          <span class="w-full inline-block">Oups ! L'image recherchée est introuvable</span>
+          <span class="w-full inline-block text-xs">Elle a surement été volée par un Blood Raven...</span>
+        </div>
       </div>
-      <div class="overflow-hidden flex-1 flex-grow max-w-full max-h-full bg-white bg-contain bg-no-repeat rounded-l relative" v-else-if="mode === 'add'">
-        <FileUpload @uploadedFile="getUploadedFile"/>
+      <div class="overflow-x-auto flex-1 flex-grow max-w-full max-h-full bg-white rounded-l relative" v-if="(typeof this.picture !== 'undefined')">
+        <div class="bg-white" v-if="['edit', 'add'].includes(mode)">
+          <FileUpload @uploadedFile="getUploadedFile"/>
+        </div>
+        <div class="overflow-hidden bg-gray-300 bg-contain bg-no-repeat lb-picture w-full" v-if="['edit', 'show'].includes(mode)" v-bind:style="{ height: (mode === 'edit' ? '82%' : '100%'), backgroundImage: 'url(' + (picture ? pictureUrl(picture.filename) : '') + ')' }">
+          <div class="w-full font-bold m-1 text-gray-900 mx-2" v-if="mode === 'edit'">Image remplacée</div>
+        </div>
       </div>
-      <div class="lb-information bg-white flex-1 xl:max-w-md lg:max-w-xs w-full border border-solid border-gray-300 text-center p-4 overflow-auto rounded-r">
+      <div class="lb-information bg-white flex-1 xl:max-w-md lg:max-w-xs w-full border border-solid border-gray-300 text-center p-4 overflow-auto rounded-r relative" v-if="(typeof this.picture !== 'undefined')">
+        <button class="py-1 px-2 text-xs absolute top-0 right-0 hover:text-blue-700" v-if="mode === 'show' && picture" @click="editPicture(picture.id)">
+          Modifier
+        </button>
         <span class="lightbox-title font-bold text-4xl" v-if="mode === 'show' && picture && picture.title">{{ picture.title }}</span>
         <p class="mt-4" v-if="picture && picture.information && mode === 'show'" v-html="picture.information"></p>
         <form v-if="['edit', 'add'].includes(mode)" class="relative min-h-full" @submit.prevent="onSubmit">
           <input type="hidden" v-model="pic_filename">
           <input type="text" v-model="pic_title" class="w-full font-bold text-4xl border-0 border-b border-gray-300" placeholder="Saisir un titre">
           <textarea v-model="pic_information" class="w-full mt-5 border-0 border-b border-gray-300" placeholder="Saisir des informations"></textarea>
-          <label for>Importance de l'image</label>
-          <select v-model="pic_size">
-            <option value="small">Small</option>
-            <option value="medium">Medium</option>
-            <option value="large">Large</option>
-          </select>
+          <div class="text-left text-gray-500">
+            <label for="pic-size">Taille de la miniature</label>
+            <select id="pic-size" v-model="pic_size" class="border-0 border-b border-gray-300 ml-8">
+              <option value="small">Petite</option>
+              <option value="medium">Moyenne</option>
+              <option value="large">Grande</option>
+            </select>
+          </div>
           <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline absolute bottom-0 right-0">
             Enregistrer
           </button>
         </form>
       </div>
     </div>
-    <div class="lb-chevron-left" @click.self="showPicture(picture.id, -1)" v-if="mode === 'show'"></div>
-    <div class="lb-chevron-right" @click.self="showPicture(picture.id, 1)" v-if="mode === 'show'"></div>
+    <div class="lb-chevron-left" @click.self="showPicture(picture.id, -1)" v-if="mode === 'show' && (typeof this.picture !== 'undefined')"></div>
+    <div class="lb-chevron-right" @click.self="showPicture(picture.id, 1)" v-if="mode === 'show' && (typeof this.picture !== 'undefined')"></div>
     <div class="lb-cross" @click.self="closeLightbox"></div>
   </div>
 </template>
@@ -61,25 +76,43 @@ export default {
   },
   created() {
     this.setMode();
-    this.fetchPictures();
+    if (this.mode !== 'add') { this.fetchPictures(); }
   },
   methods: {
     pictureUrl(filename) {
-      const images = require.context('../assets/', false, /\.jpg$/);
+      const images = require.context('../../../server/uploads/', false, /\.jpg|.png|.jpeg$/);
       return images(`./${filename}`);
     },
     closeLightbox() {
       this.$router.push('/Figure');
     },
+    editPicture(currentPicId) {
+      this.mode = 'edit';
+      this.$router.push(`/picture/${currentPicId}#edit`);
+    },
     showPicture(currentPicId, increment) {
+      currentPicId = Number(currentPicId);
+
+      const maxPicId = this.pictures[this.pictures.length - 1].id;
+      const minPicId = this.pictures[0].id;
+
       let nextPicId = 0;
 
-      if ((currentPicId + increment) < 0) {
-        nextPicId = this.pictures.length - 1;
-      } else if ((currentPicId + increment) >= this.pictures.length) {
-        nextPicId = 0;
+      if (currentPicId < minPicId) {
+        nextPicId = maxPicId;
+      } else if (currentPicId > maxPicId) {
+        nextPicId = minPicId;
       } else {
-        nextPicId = currentPicId + increment;
+        const nextPic = this.pictures.find(picture => picture.id === Number(currentPicId + increment));
+
+        if (typeof nextPic === 'undefined') {
+          console.log(nextPic);
+
+          this.showPicture(currentPicId + increment, increment);
+          return;
+        }
+
+        nextPicId = nextPic.id;
       }
 
       this.$router.push(`/picture/${nextPicId}`);
@@ -87,7 +120,7 @@ export default {
     setMode() {
       if (this.$route.params.id === 'add') {
         this.mode = 'add';
-      } else if (this.$route.query.edit === null) {
+      } else if (this.$route.hash === '#edit') {
         this.mode = 'edit';
       } else {
         this.mode = 'show';
@@ -96,9 +129,16 @@ export default {
     fetchPictures() {
       axios.get('http://localhost:3000/api/pictures').then((response) => {
         this.pictures = response.data;
-        console.log(this.picture);
         this.picture = this.pictures.find(picture => picture.id === Number(this.$route.params.id));
-        console.log(this.picture);
+
+        if (typeof this.picture !== 'undefined') {
+          this.pic_filename = this.picture.filename;
+          this.pic_title = this.picture.title;
+          this.pic_information = this.picture.information;
+          this.pic_size = this.picture.size;
+        } else if (this.mode !== 'add') {
+          // Display 404
+        }
       });
     },
     getUploadedFile(value) {
@@ -107,11 +147,12 @@ export default {
     async onSubmit() {
       try {
         await axios.post('http://localhost:3000/api/pictures', {
-          title: this.pic_title, filename: this.pic_filename, information: this.pic_information, size: this.pic_size,
+          id: (this.mode === 'edit' ? this.picture.id : null), title: this.pic_title, filename: this.pic_filename, information: this.pic_information, size: this.pic_size, mode: this.mode,
         }).then((response) => {
-          console.log(response);
+          if (response.data.success) {
+            this.$router.push('/Figure');
+          }
         });
-        // this.message = 'Image sauvegardée';
       } catch (err) {
         /* this.message = err.response.data.error;
         this.hasError = true; */
@@ -162,5 +203,9 @@ export default {
 
   textarea{
     min-height:150px;
+  }
+
+  .top30{
+    top:30%;
   }
 </style>

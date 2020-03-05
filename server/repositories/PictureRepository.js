@@ -14,6 +14,14 @@ class PictureRepository {
     return picture.save();
   }
 
+  getLastPicture(){
+    return this.model.find().sort({id:-1}).limit(1);
+  }
+
+  countPictures(){
+    return this.model.countDocuments();
+  }
+
   // Return all pictures
   findAll() {
     return this.model.find();
@@ -37,14 +45,15 @@ class PictureRepository {
   }
 
   // Update picture
-  async updateById(truc, object) {
+  async updateById(picId, object) {
 
-    let doc = await this.model.findOne({ id: truc });
+    let doc = await this.model.findOne({ id: picId });
 
     doc.title = object.title;
     doc.filename = object.filename;
     doc.information = object.information;
     doc.creation_date = object.creation_date;
+    doc.size = object.size;
     doc.active = object.active;
 
     return await doc.save();

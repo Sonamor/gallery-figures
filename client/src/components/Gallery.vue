@@ -13,14 +13,14 @@
          :key="picture.id"
           @mouseover="picture.hover = true"
           @mouseleave="picture.hover = false">
-      <div class="flex flex-col h-full bg-white relative">
-        <div class="gallery__actions"
-          v-show="user != false && picture.hover === true" >
-          <img class="action__edit" src="../assets/icons/edit.png" @click.self="editPicture(picture.id)">
-          <img class="action__hide" src="../assets/icons/hide.png" @click.self="hidePicture(picture.id, picture)">
-          <img class="action__cross" src="../assets/icons/cross.png" @click.self="deletePicture(picture.id)">
-        </div>
-        <router-link :to="`/picture/${picture.id}`">
+      <a class="cursor-pointer" @click.stop="showPicture(picture.id)">
+        <div class="flex flex-col h-full bg-white relative">
+          <div class="gallery__actions"
+            v-show="user != false && picture.hover === true" >
+            <img class="action__edit" src="../assets/icons/edit.png" @click.stop="editPicture(picture.id)">
+            <img class="action__hide" src="../assets/icons/hide.png" @click.stop="hidePicture(picture.id, picture)">
+            <img class="action__cross" src="../assets/icons/cross.png" @click.stop="deletePicture(picture.id)">
+          </div>
           <img :src="thumbUrl(picture.filename)" class="gallery__img w-full" :title="picture.title" :alt="picture.title">
           <div v-bind:class="['px-4 py-2', (picture.active === false ? 'bg-red-300': 'bg-white')]">
             <div class="font-bold text-base mb-1">{{ picture.title }}</div>
@@ -28,8 +28,8 @@
               {{ picture.information }}
             </p>
           </div>
-        </router-link>
-      </div>
+        </div>
+      </a>
     </div>
     -{{user}}-
   </div>
@@ -62,7 +62,7 @@ export default {
   },
   methods: {
     thumbUrl(filename) {
-      return require(`../assets/thumbnails/${filename}`);
+      return require(`../../../server/uploads/thumbnails/${filename}`);
     },
     fetchPictures() {
       axios.get('http://localhost:3000/api/pictures').then((response) => {
@@ -98,8 +98,12 @@ export default {
       });
     },
 
-    editPicture() {
-      console.log('editPicture');
+    showPicture(picId) {
+      this.$router.push(`/picture/${picId}`);
+    },
+
+    editPicture(picId) {
+      this.$router.push(`/picture/${picId}#edit`);
       // route vers la page picture/:id#edit
     },
 
