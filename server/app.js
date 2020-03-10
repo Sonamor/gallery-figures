@@ -6,14 +6,10 @@ const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const cors = require('cors');
-const session = require('express-session');
-const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
 const flash = require('connect-flash');
+const bodyParser = require("body-parser");
 
 const config = require('./config/Config');
-
-const routes = require('./routes/Routes');
 
 const app = express();
 
@@ -22,18 +18,14 @@ mongoose.connect(config.DB, {
   useUnifiedTopology: true,
 });
 
-app.use(cors({credentials: true, origin: 'http://localhost:8080',
-enablePreflight: true}));  //enable cors
-app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "http://localhost:8080");
-  res.header("Access-Control-Allow-Credentials", true);
-  res.header(
-  "Access-Control-Allow-Headers",
-  "Origin, X-Requested-With, Content-Type, Accept"
-  );
-  next();
-  });
 
+// parse requests of content-type - application/json
+app.use(bodyParser.json());
+
+// parse requests of content-type - application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(cors({credentials: true, enablePreflight: true}));  //enable cors
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -44,62 +36,14 @@ app.use(history({
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(flash());
-app.use(session({
-  cookieName: 'session',
-  secret: 'keyboard cat',
-  resave: true,
-  saveUninitialized: true,
-  cookie: {
-      secure: false
-  }
-}));
-
-app.use(passport.initialize());
-app.use(passport.session());
 
 var User = require('./models/User');
-var bcrypt = require('bcrypt');
 
 
-passport.use(new LocalStrategy(
-  function(username, password, done) {
-    User.findOne({
-        username: username
-      }, async function(err, user) {
 
-        // Bug
-        if (err) {
-          return done(err);
-        }
-
-        // user does not exist
-        if (!user) {
-          return done(null, false);
-        }
-
-        const match = bcrypt.compareSync(password, user.password);
-
-        // Incorrect password
-        if (match === false) {
-          return done(null, false);
-        }
-
-        // Correct password
-        return done(null, user);
-      });
-  }
-));
-
-passport.serializeUser(function(user, done) {
-  done(null, user);
-});
-passport.deserializeUser(function(id, done) {
-  // NOTE: second true param is making 'hack'
-  // so the session will be saved after a page refresh, but it will be destroyed after a server refresh
-  done(null, true);
-});
-/*passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());*/
+const routes = require('./routes/Routes');
+require('./routes/Auth')(app);
+require('./routes/User')(app);
 
 app.use('/api', routes);
 

@@ -80,10 +80,11 @@ app.get('/logout', function(req, res) {
   }
 });
 
+/*
 app.get('/sessionStatus', function(req, res) {
   res.send({ success : true, user: {_id: '5e402361d4c79b29242b842b', username: 'Romanos', password: '$2b$10$sGSaxYRvARjd/LJlzMyyvex42PhlmSX/8NK4QFnEXWUOlqowhDTl.'}});
 });
-
+*/
 
 
 

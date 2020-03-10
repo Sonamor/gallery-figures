@@ -1,6 +1,6 @@
 <template>
   <div class="gallery">
-    <div class="rounded overflow-hidden shadow-lg" v-show="user != false">
+    <div class="rounded overflow-hidden shadow-lg" v-show="loggedIn != false">
       <router-link to="/picture/add" @click.self="addPicture">
         <div class="bg-white p-16 hover:bg-gray-400">
           <img src="../assets/icons/xl-plus.png" class="lg-plus" title="Ajouter une image" alt="Ajouter une image">
@@ -16,7 +16,7 @@
       <a class="cursor-pointer" @click.stop="showPicture(picture.id)">
         <div class="flex flex-col h-full bg-white relative">
           <div class="gallery__actions"
-            v-show="user != false && picture.hover === true" >
+            v-show="loggedIn != false && picture.hover === true" >
             <img class="action__edit" src="../assets/icons/edit.png" @click.stop="editPicture(picture.id)">
             <img class="action__hide" src="../assets/icons/hide.png" @click.stop="hidePicture(picture.id, picture)">
             <img class="action__cross" src="../assets/icons/cross.png" @click.stop="deletePicture(picture.id)">
@@ -31,12 +31,12 @@
         </div>
       </a>
     </div>
-    -{{user}}-
+    -{{loggedIn}}-
   </div>
 </template>
 
 <script>
-// import pictures from '@/pictures.json';
+
 import axios from 'axios';
 // eslint-disable-next-line import/extensions
 import bus from '../../bus.js';
@@ -47,8 +47,12 @@ export default {
     return {
       pictures: [],
       doneLoading: false,
-      user: this.$root.user,
     };
+  },
+  computed: {
+    loggedIn() {
+      return this.$store.state.auth.status.loggedIn;
+    },
   },
   watch: {
     $route() {

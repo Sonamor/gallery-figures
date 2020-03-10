@@ -1,16 +1,47 @@
 <template>
   <div id="app">
-    <div id="nav" class="text-right pr-2 text-white text-sm">
-      <span class="text-xs" v-show="user != false">Bienvenue {{ user.username }}</span>
-      <router-link to="/login" class="text-xs hover:text-blue-700 ml-4 cursor-pointer" v-show="user == false">Connexion</router-link>
-      <a @click="logOut" class="text-xs hover:text-blue-700 ml-4 cursor-pointer" v-show="user != false">Déconnexion</a>
+    <nav id="nav" class="text-right pr-2 text-white text-sm">
+      <div>
+        <li v-if="showAdminBoard">
+          <router-link to="/admin">Admin Board</router-link>
+        </li>
+        <li v-if="showModeratorBoard">
+          <router-link to="/mod">Moderator Board</router-link>
+        </li>
+        <li v-if="currentUser">
+          <router-link to="/user">User</router-link>
+        </li>
+      </div>
+
+      <div v-if="!currentUser">
+        <li>
+          <router-link to="/login" class="text-xs hover:text-blue-700 ml-4 cursor-pointer">
+            Connexion
+          </router-link>
+        </li>
+      </div>
+
+      <div v-if="currentUser">
+        <li>
+          <router-link to="/profile" class="text-xs">
+            Bienvenue {{ currentUser.username }}
+          </router-link>
+        </li>
+        <li>
+          <a class="text-xs hover:text-blue-700 ml-4 cursor-pointer" href @click.prevent="logOut">
+            Déconnexion
+          </a>
+        </li>
+      </div>
+    </nav>
+
+    <div class="container">
+      <router-view />
     </div>
-    <router-view/>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
 
 export default {
   name: 'App',
@@ -19,11 +50,29 @@ export default {
       user: this.$root.user,
     };
   },
+  computed: {
+    currentUser() {
+      return this.$store.state.auth.user;
+    },
+    showAdminBoard() {
+      if (this.currentUser && this.currentUser.roles) {
+        return this.currentUser.roles.includes('ROLE_ADMIN');
+      }
+
+      return false;
+    },
+    showModeratorBoard() {
+      if (this.currentUser && this.currentUser.roles) {
+        return this.currentUser.roles.includes('ROLE_MODERATOR');
+      }
+
+      return false;
+    },
+  },
   methods: {
     logOut() {
-      axios.get('http://localhost:3000/api/logout', { withCredentials: true }).then(() => {
-        this.$router.push('/');
-      });
+      this.$store.dispatch('auth/logout');
+      this.$router.push('/login');
     },
   },
 };
