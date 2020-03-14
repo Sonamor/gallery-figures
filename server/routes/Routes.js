@@ -1,118 +1,50 @@
 const express = require('express');
-
 const app = express.Router();
 const repository = require('../repositories/PictureRepository');
+const { authJwt } = require("../middlewares/Index");
+const resizeOptimizeImages = require('resize-optimize-images');
+const fs = require('fs');
+const multer = require('multer');
 
-var passport = require('passport');
-var User = require('../models/User');
-
-app.get('/', function (req, res) {
-  res.render('index', { user : req.user });
+// Set response headers
+app.use(function(req, res, next) {
+  res.header(
+    "Access-Control-Allow-Headers",
+    "x-access-token, Origin, Content-Type, Accept"
+  );
+  next();
 });
 
-app.get('/login', function(req, res) {
-  if ( req.session.passport.user != null ) {
-    res.redirect('/');
-  } else {
-    res.render('login', {
-      user : req.user,
-      title : 'Sign-in',
-      subTitle : 'Come back please !'
-    });
-  }
-});
-
-app.post('/login', function(req, res, next) {
-  passport.authenticate('local', function(err, user, info) {
-
-    if (err) {
-      return next(err); // will generate a 500 error
-    }
-    // Generate a JSON response reflecting authentication status
-    if (! user) {
-      return res.send({ success : false, message : 'Mot de passe incorrect' });
-    }
-    // ***********************************************************************
-    // "Note that when using a custom callback, it becomes the application's
-    // responsibility to establish a session (by calling req.login()) and send
-    // a response."
-    // Source: http://passportjs.org/docs
-    // ***********************************************************************
-    req.login(user, loginErr => {
-      if (loginErr) {
-        return next(loginErr);
-      }
-      req.session.save(function(){
-        return res.send({ success : true, message : 'Bienvenue ' + user.username });
-      });
-    });
-  })(req, res, next);
-});
-
-const authMiddleware = (req, res, next) => {
-  if (!req.isAuthenticated()) {
-    res.send({ success : false });
-  } else {
-    return next()
-  }
-}
-
-app.get("/user", authMiddleware, (req, res) => {
-  let user = User.findOne({
-    username: req.session.passport.user
-  });
-
-  var returnStatus = { success : false };
-  if (user !== null) {
-    returnStatus = { success : true, user: req.session.passport.user };
-  }
-console.log(returnStatus);
-  res.send(returnStatus);
-})
-
-app.get('/logout', function(req, res) {
-  if ( req.session.passport.user != null ) {
-    req.logout();
-    res.send({ success : true });
-  }
-  else {
-    res.send({ success : false });
-  }
-});
-
-/*
-app.get('/sessionStatus', function(req, res) {
-  res.send({ success : true, user: {_id: '5e402361d4c79b29242b842b', username: 'Romanos', password: '$2b$10$sGSaxYRvARjd/LJlzMyyvex42PhlmSX/8NK4QFnEXWUOlqowhDTl.'}});
-});
-*/
-
-
-
-// Get Picutres
-// get all picture items in the db
+// Get Pictures
+// Get all picture items in the db
 app.get('/pictures', (req, res) => {
-  repository.findAll().then((pictures) => {
+  repository.findByField(req.query).then((pictures) => {
     res.json(pictures);
   }).catch((error) => console.log(error));
 });
 
-// add a picture item
-app.post('/pictures', (req, res) => {
+// Add a picture item
+app.post('/pictures', [authJwt.verifyToken], (req, res) => {
+
+  // req.userId === null : means the token provided is different from the token saved on the server-side.
+  if ( req.userId === null )
+    res.send({ success : false });
 
   (async () => {
-    let picId = 0;
+    let pictureId = 0;
 
     const mode = req.body.mode;
 
+    // Increment pictureId if we are adding a picture
     if(mode === 'add'){
       await repository.getLastPicture().then((lastPicture) => {
-        picId = Number(lastPicture[0].id) + 1;
+        pictureId = Number(lastPicture[0].id) + 1;
       });
     } else {
-      picId = req.body.id;
+      pictureId = req.body.id;
     }
 
-    const id = picId;
+    const id = pictureId;
     const title = req.body.title;
     const filename = req.body.filename.replace(/ /g,"_");
     const information = req.body.information;
@@ -121,18 +53,18 @@ app.post('/pictures', (req, res) => {
 
     var today = new Date();
     var dd = today.getDate();
-    var mm = today.getMonth() + 1; //January is 0!
+    var mm = today.getMonth() + 1; // January is 0
     var yyyy = today.getFullYear();
     var h = today.getHours();
     var i = today.getMinutes();
     var s = today.getSeconds();
 
     if(dd<10) {
-        dd = '0'+dd
+      dd = '0' + dd;
     }
 
     if(mm<10) {
-        mm = '0'+mm
+      mm = '0' + mm;
     }
 
     today = yyyy + '-' + mm + '-' + dd + ' ' + h + ':' + i + ':' + s;
@@ -153,45 +85,46 @@ app.post('/pictures', (req, res) => {
   })();
 });
 
-// delete a picture item
-app.delete('/picture/:id', (req, res) => {
-  if ( req.session.passport.user != null ) {
-    const { id } = req.params;
-    repository.deleteByField({id: id}).then((ok) => {
-      res.send({ success : true, message: "Image supprimée" });
-    }).catch((error) => console.log(error));
-  } else {
+// Delete a picture item
+app.delete('/picture/:id', [authJwt.verifyToken], (req, res) => {
+  if ( req.userId === null )
     res.send({ success : false });
-  }
+
+  const { id } = req.params;
+
+  repository.deleteByField({ id: id }).then((ok) => {
+    res.send({ success : true, message: "Image supprimée" });
+  }).catch((error) => console.log(error));
+
 });
 
-// update a picture item
+// Update a picture item
 app.put('/picture/:id', (req, res) => {
-  if ( req.session.passport.user != null ) {
-    const id = req.params.id;
-    const picture = req.body;
-    const message = "Image " + (req.body.active === true ? "activée" : "désactivée");
-
-    repository.updateById(id, picture)
-      .then(res.send({ success : true, message: message }))
-      .catch((error) => console.log(error));
-  } else {
+  if ( req.userId === null )
     res.send({ success : false });
-  }
+
+  const id = req.params.id;
+  const picture = req.body;
+  const message = "Image " + (req.body.active === true ? "activée" : "désactivée");
+
+  repository.updateById(id, picture)
+    .then(res.send({ success : true, message: message }))
+    .catch((error) => console.log(error));
 });
-const fileFilter = (req, file, cb) =>{
+
+// Filters the images relatively to their mimetype
+const fileFilter = (req, file, cb) => {
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
   if(!allowedTypes.includes(file.mimetype)){
     const error = new Error("Incorrect file");
     error.code = "INCORRECT_FILETYPE";
-
     return cb(error, false);
   }
 
   cb(null, true);
 }
 
-const multer = require('multer');
+// Set the storage destination and filename of the uploaded pictures
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, './uploads')
@@ -201,8 +134,9 @@ const storage = multer.diskStorage({
     cb(null, filename)
   }
 })
+
+// Set up the multer module
 const upload = multer({
-  //dest: './uploads',
   storage: storage,
   fileFilter,
   limits: {
@@ -210,6 +144,7 @@ const upload = multer({
   }
 })
 
+// Sending back errors in case of wrong filetype or big file
 app.use((err, req, res, next) => {
   if (err.code === "INCORRECT_FILETYPE"){
     res.status(422).json({ error: 'Only images are allowed'});
@@ -220,17 +155,16 @@ app.use((err, req, res, next) => {
     return;
   }
 })
-const resizeOptimizeImages = require('resize-optimize-images');
-const fs = require('fs');
-// update a picture item
-app.post('/upload', upload.single('file'), (req, res) => {
+
+// Upload a picture
+app.post('/upload', [authJwt.verifyToken], upload.single('file'), (req, res) => {
 
   const filename = req.file.filename.replace(/ /g,"_");
 
-  // destination.txt will be created or overwritten by default.
+  // Copy the file to the thumbnails folder before resizing it
   fs.copyFile('./uploads/' + filename, './uploads/thumbnails/' + filename, (err) => {
     if (err) throw err;
-    console.log('source.txt was copied to destination.txt');
+
     (async () => {
       // Set the options.
       const options = {
@@ -239,10 +173,11 @@ app.post('/upload', upload.single('file'), (req, res) => {
         quality: 90
       };
 
-      // Run the module.
+      // Run the module that resizes the images
       await resizeOptimizeImages(options);
     })();
   });
   res.send({ success : true, message: "Image téléchargée" });
 });
+
 module.exports = app;

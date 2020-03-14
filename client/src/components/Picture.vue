@@ -1,5 +1,5 @@
 <template>
-  <div class="lightbox fixed w-screen h-screen xl:p-16 xl:px-48 lg:p-10 lg:px-24 md:p-6 md:px-20 p-4 px-16 top-0 left-0" @click.self="closeLightbox">
+  <div class="lightbox fixed w-screen h-screen xl:p-16 xl:px-48 lg:p-10 lg:px-24 md:p-6 md:px-20 p-4 px-16 top-0 left-0" @mousedown.self="closeLightbox">
     <div class="lb-container w-full h-full flex lg:flex-row flex-col justify-center">
       <div class="overflow-x-auto flex-1 flex-grow max-w-full max-h-full bg-white rounded relative text-center relative" v-if="(typeof this.picture === 'undefined')">
         <div class="absolute top30 w-full">
@@ -16,8 +16,8 @@
           <div class="w-full font-bold m-1 text-gray-900 mx-2" v-if="mode === 'edit'">Image remplacée</div>
         </div>
       </div>
-      <div class="lb-information bg-white flex-1 xl:max-w-md lg:max-w-xs w-full border border-solid border-gray-300 text-center p-4 overflow-auto rounded-r relative" v-if="(typeof this.picture !== 'undefined')">
-        <button class="py-1 px-2 text-xs absolute top-0 right-0 hover:text-blue-700" v-if="mode === 'show' && picture" @click="editPicture(picture.id)">
+      <div v-bind:class="['lb-information flex-1 xl:max-w-md lg:max-w-xs w-full border border-solid border-gray-300 text-center p-4 overflow-auto rounded-r relative', (picture.active === false ? 'bg-red-300': 'bg-white')]" v-if="(typeof this.picture !== 'undefined')">
+        <button class="py-1 px-2 text-xs absolute top-0 right-0 hover:text-blue-700" v-if="loggedIn && mode === 'show' && picture" @click="editPicture(picture.id)">
           Modifier
         </button>
         <span class="lightbox-title font-bold text-4xl" v-if="mode === 'show' && picture && picture.title">{{ picture.title }}</span>
@@ -49,6 +49,7 @@
 <script>
 import axios from 'axios';
 import FileUpload from './FileUpload.vue';
+import authHeader from '../services/auth-header';
 
 export default {
   name: 'Picture',
@@ -68,6 +69,11 @@ export default {
       pic_size: 'small',
     };
   },
+  computed: {
+    loggedIn() {
+      return this.$store.state.auth.status.loggedIn;
+    },
+  },
   watch: {
     $route() {
       const self = this;
@@ -79,17 +85,32 @@ export default {
     if (this.mode !== 'add') { this.fetchPictures(); }
   },
   methods: {
+    // Display pictures from the upload directory
     pictureUrl(filename) {
-      const images = require.context('../../../server/uploads/', false, /\.jpg|.png|.jpeg$/);
-      return images(`./${filename}`);
+      if (filename) {
+        try {
+          const images = require.context('../../../server/uploads/', false, /\.jpg|.png|.jpeg$/);
+          return images(`./${filename}`);
+        } catch (e) {
+          if (e.name !== 'ModuleNotFoundError') throw e; // handle false-positives
+          return require('../assets/logo.png');
+        }
+      }
+      return require('../assets/logo.png');
     },
+
+    // Navigate to the gallery
     closeLightbox() {
-      this.$router.push('/Figure');
+      this.$router.push('/gallery');
     },
+
+    // Navigate to the same layout but in edit mode
     editPicture(currentPicId) {
       this.mode = 'edit';
       this.$router.push(`/picture/${currentPicId}#edit`);
     },
+
+    // Navigate to next or previous picture
     showPicture(currentPicId, increment) {
       currentPicId = Number(currentPicId);
 
@@ -98,6 +119,7 @@ export default {
 
       let nextPicId = 0;
 
+      // If a picture is missing (eg : has been deleted completely in db) or is disabled and user is not logged in, skip to the n+1/-1 next picture
       if (currentPicId < minPicId) {
         nextPicId = maxPicId;
       } else if (currentPicId > maxPicId) {
@@ -105,18 +127,17 @@ export default {
       } else {
         const nextPic = this.pictures.find(picture => picture.id === Number(currentPicId + increment));
 
-        if (typeof nextPic === 'undefined') {
-          console.log(nextPic);
-
+        if (typeof nextPic === 'undefined' || (typeof nextPic !== 'undefined' && !this.loggedIn && nextPic.active === false)) {
           this.showPicture(currentPicId + increment, increment);
           return;
         }
-
         nextPicId = nextPic.id;
       }
 
       this.$router.push(`/picture/${nextPicId}`);
     },
+
+    // Set the mode of the layout
     setMode() {
       if (this.$route.params.id === 'add') {
         this.mode = 'add';
@@ -126,10 +147,17 @@ export default {
         this.mode = 'show';
       }
     },
+
+    // Fetch pictures from the database
     fetchPictures() {
-      axios.get('http://localhost:3000/api/pictures').then((response) => {
+      const options = (!this.loggedIn) ? { active: true } : {};
+      axios.get('http://localhost:3000/api/pictures', {
+        params: options,
+      }).then((response) => {
         this.pictures = response.data;
-        this.picture = this.pictures.find(picture => picture.id === Number(this.$route.params.id));
+
+        this.picture = this.pictures.find(picture => (this.loggedIn && picture.id === Number(this.$route.params.id))
+          || (!this.loggedIn && picture.active === true && picture.id === Number(this.$route.params.id)));
 
         if (typeof this.picture !== 'undefined') {
           this.pic_filename = this.picture.filename;
@@ -138,19 +166,25 @@ export default {
           this.pic_size = this.picture.size;
         } else if (this.mode !== 'add') {
           // Display 404
+        } else if (typeof this.picture !== 'undefined' && !this.loggedIn && this.picture.active === false) {
+          this.showPicture(this.picture.id + 1, 1);
         }
       });
     },
+
+    // display the uploaded file
     getUploadedFile(value) {
       this.pic_filename = value;
     },
+
+    // Add or edit a picture
     async onSubmit() {
       try {
         await axios.post('http://localhost:3000/api/pictures', {
           id: (this.mode === 'edit' ? this.picture.id : null), title: this.pic_title, filename: this.pic_filename, information: this.pic_information, size: this.pic_size, mode: this.mode,
-        }).then((response) => {
+        }, { headers: authHeader() }).then((response) => {
           if (response.data.success) {
-            this.$router.push('/Figure');
+            this.$router.push('/gallery');
           }
         });
       } catch (err) {

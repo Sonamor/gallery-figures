@@ -1,0 +1,11 @@
+Bug 
+
+A faire :
+- Messages d'erreur (file too big, no token)
+- Code style 
+- Mettre un warning si post validé sans image
+- wysiwyg
+- form validation
+- design
+- send image when click on enregistrer
+- contrôle image gif

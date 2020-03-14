@@ -1,6 +1,6 @@
 <template>
   <div class="px-4 py-2">
-    <div v-bind:class="getClass()" role="alert" v-if="message != ''">
+    <div v-bind:class="setClass()" role="alert" v-if="message != ''">
       <span class="block sm:inline">{{ message }}</span>
       <span class="absolute top-0 bottom-0 right-0 px-4 py-3">
         <svg @click="message = ''" class="fill-current h-6 w-6" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
@@ -9,7 +9,6 @@
     <form enctype="multipart/form-data" @submit.prevent="onSubmit">
       <div class="fields">
           <div class="w-full font-bold m-1 text-gray-500">Nouvelle image</div>
-          <!--<input type="file" ref="file" @change="onSelect" class="mt-2">-->
           <input
             ref="input"
             type="file"
@@ -153,6 +152,7 @@ import axios from 'axios';
 import VueCropper from 'vue-cropperjs';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import 'cropperjs/dist/cropper.css';
+import authHeader from '../services/auth-header';
 
 export default {
   name: 'FileUpload',
@@ -168,11 +168,12 @@ export default {
     };
   },
   methods: {
-
+    // get image data for post processing, e.g. upload or setting image src
     cropImage() {
-      // get image data for post processing, e.g. upload or setting image src
       this.cropImg = this.$refs.cropper.getCroppedCanvas().toDataURL();
     },
+
+    // Flip image on X axis
     flipX() {
       const dom = this.$refs.flipX;
       let scale = dom.getAttribute('data-scale');
@@ -180,6 +181,8 @@ export default {
       this.$refs.cropper.scaleX(scale);
       dom.setAttribute('data-scale', scale);
     },
+
+    // Flip image on Y axis
     flipY() {
       const dom = this.$refs.flipY;
       let scale = dom.getAttribute('data-scale');
@@ -187,71 +190,56 @@ export default {
       this.$refs.cropper.scaleY(scale);
       dom.setAttribute('data-scale', scale);
     },
-    getCropBoxData() {
-      this.data = JSON.stringify(this.$refs.cropper.getCropBoxData(), null, 4);
-    },
-    getData() {
-      this.data = JSON.stringify(this.$refs.cropper.getData(), null, 4);
-    },
+
+    // Move the image
     move(offsetX, offsetY) {
       this.$refs.cropper.move(offsetX, offsetY);
     },
+
+    // Reset the cropper mask
     reset() {
       this.$refs.cropper.reset();
     },
+
+    // Rotate the image
     rotate(deg) {
       this.$refs.cropper.rotate(deg);
     },
-    setCropBoxData() {
-      if (!this.data) return;
-      this.$refs.cropper.setCropBoxData(JSON.parse(this.data));
-    },
-    setData() {
-      if (!this.data) return;
-      this.$refs.cropper.setData(JSON.parse(this.data));
-    },
+
+    // Set image in cropperjs
     setImage(e) {
       const file = e.target.files[0];
       if (file.type.indexOf('image/') === -1) {
-        alert('Please select an image file');
+        alert('Veuillez sélectionner un fichier image');
         return;
       }
       if (typeof FileReader === 'function') {
         const reader = new FileReader();
         reader.onload = (event) => {
           this.imgSrc = event.target.result;
-          // rebuild cropperjs with the updated source
-          console.log(event);
           this.$refs.cropper.replace(event.target.result);
         };
-        console.log('lol');
+
         reader.readAsDataURL(file);
       } else {
-        alert('Sorry, FileReader API not supported');
+        alert('Désolé, FileReader API n\'est pas supporté');
       }
     },
+
+    // Show the selected image
     showFileChooser() {
       this.$refs.input.click();
     },
+
+    // Zoom on the image
     zoom(percent) {
       this.$refs.cropper.relativeZoom(percent);
     },
-    onSelect() {
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-      const file = this.$refs.file.files[0];
-      this.file = file;
 
-      if (!allowedTypes.includes(file.type)) {
-        this.message = 'Seules les images sont acceptées';
-        this.hasError = true;
-      }
-      if (file.size > 5000000) {
-        this.message = 'L\'image dépasse 500 kb';
-        this.hasError = true;
-      }
-    },
+    // Submit the image and upload it on the server
     async onSubmit() {
       await this.$refs.cropper.getCroppedCanvas().toBlob(async (blob) => {
+        // Image verfication : extension and size
         const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
 
         const file = this.$refs.input.files[0];
@@ -269,10 +257,9 @@ export default {
 
         // Pass the image file name as the third parameter if necessary.
         formData.append('file', blob, this.file.name);
-        // formData.append('file', this.file);
 
         try {
-          await axios.post('http://localhost:3000/api/upload', formData);
+          await axios.post('http://localhost:3000/api/upload', formData, { headers: authHeader() });
           this.message = 'Image sauvegardée';
           this.$emit('uploadedFile', this.file.name);
         } catch (err) {
@@ -281,7 +268,9 @@ export default {
         }
       });
     },
-    getClass() {
+
+    // Set alert box class relatively to the hasError variable
+    setClass() {
       return {
         'border px-4 py-3 rounded relative mt-4': true,
         'bg-red-100': this.hasError,
@@ -295,7 +284,7 @@ export default {
   },
 };
 </script>
-<!-- Add "scoped" attribute to limit CSS to this component only -->
+
 <style>
 .preview {
   height: calc(372px * (9 / 16));

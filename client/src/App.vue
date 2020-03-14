@@ -1,41 +1,19 @@
 <template>
   <div id="app">
-    <nav id="nav" class="text-right pr-2 text-white text-sm">
-      <div>
-        <li v-if="showAdminBoard">
-          <router-link to="/admin">Admin Board</router-link>
-        </li>
-        <li v-if="showModeratorBoard">
-          <router-link to="/mod">Moderator Board</router-link>
-        </li>
-        <li v-if="currentUser">
-          <router-link to="/user">User</router-link>
-        </li>
-      </div>
-
+    <nav class="text-right pr-2 text-white text-sm">
       <div v-if="!currentUser">
-        <li>
-          <router-link to="/login" class="text-xs hover:text-blue-700 ml-4 cursor-pointer">
-            Connexion
-          </router-link>
-        </li>
+        <router-link to="/login" class="text-xs hover:text-blue-700 ml-4 cursor-pointer">
+          Connexion
+        </router-link>
       </div>
-
       <div v-if="currentUser">
-        <li>
-          <router-link to="/profile" class="text-xs">
-            Bienvenue {{ currentUser.username }}
-          </router-link>
-        </li>
-        <li>
-          <a class="text-xs hover:text-blue-700 ml-4 cursor-pointer" href @click.prevent="logOut">
-            Déconnexion
-          </a>
-        </li>
+        Bienvenue {{ currentUser.username }}
+        <a class="text-xs hover:text-blue-700 ml-4 cursor-pointer" href @click.prevent="logOut">
+          Déconnexion
+        </a>
       </div>
     </nav>
-
-    <div class="container">
+    <div>
       <router-view />
     </div>
   </div>
@@ -46,34 +24,34 @@
 export default {
   name: 'App',
   data() {
-    return {
-      user: this.$root.user,
-    };
+    return {};
   },
   computed: {
+    // Get current logged user
     currentUser() {
       return this.$store.state.auth.user;
     },
-    showAdminBoard() {
-      if (this.currentUser && this.currentUser.roles) {
-        return this.currentUser.roles.includes('ROLE_ADMIN');
-      }
-
-      return false;
-    },
-    showModeratorBoard() {
-      if (this.currentUser && this.currentUser.roles) {
-        return this.currentUser.roles.includes('ROLE_MODERATOR');
-      }
-
-      return false;
-    },
   },
   methods: {
+    // To log out from the app
     logOut() {
       this.$store.dispatch('auth/logout');
-      this.$router.push('/login');
+      this.$router.push('/');
     },
   },
 };
 </script>
+
+<style>
+  @import url('https://fonts.googleapis.com/css?family=Roboto');
+  html { font-size: 22px; }
+  body {
+    font-family: 'Roboto', sans-serif;
+    background: #2d3748;
+  }
+  a {
+    color: #0094FF;
+    text-decoration: none;
+  }
+  a:hover { color: #0074C6; }
+</style>

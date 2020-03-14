@@ -12,13 +12,13 @@ verifyToken = (req, res, next) => {
   }
 
   console.log(token);
-  console.log(config.secret);
   jwt.verify(token, config.secret, (err, decoded) => {
     console.log(err);
     if (err) {
       return res.status(401).send({ message: "Unauthorized!" });
     }
     req.userId = decoded.id;
+    console.log(req.userId);
     next();
   });
 };

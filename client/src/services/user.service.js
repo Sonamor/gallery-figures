@@ -4,6 +4,7 @@ import authHeader from './auth-header';
 
 const API_URL = 'http://localhost:3000/user/test/';
 
+// Class to get information from backend routes relatively to the logged in user
 class UserService {
   getPublicContent() {
     return axios.get(`${API_URL}all`);

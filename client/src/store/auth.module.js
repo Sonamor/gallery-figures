@@ -11,6 +11,7 @@ export const auth = {
   namespaced: true,
   state: initialState,
   actions: {
+    // Login and change the state
     login({ commit }, user) {
       return AuthService.login(user).then(
         (user) => {
@@ -23,6 +24,8 @@ export const auth = {
         },
       );
     },
+
+    // Logout and change the state
     logout({ commit }) {
       AuthService.logout();
       commit('logout');

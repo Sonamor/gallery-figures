@@ -27,6 +27,11 @@ class PictureRepository {
     return this.model.find();
   }
 
+  // Return all pictures
+  findByField(keyValue) {
+    return this.model.find(keyValue);
+  }
+
   // Find picture by the id
   findById(id) {
     return this.model.findById(id);

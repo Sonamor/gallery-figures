@@ -3,7 +3,9 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:3000/auth/';
 
+// Class used to handle the authentification of the users
 class AuthService {
+  // Send username and password to the "signin" route in the backend and store the returned accesstoken in the localstorage
   login(user) {
     return axios
       .post(`${API_URL}signin`, {
@@ -19,6 +21,7 @@ class AuthService {
       });
   }
 
+  // Removing the stored item for the session to logout the user
   logout() {
     localStorage.removeItem('user');
   }

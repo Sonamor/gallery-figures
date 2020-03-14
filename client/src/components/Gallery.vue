@@ -8,9 +8,10 @@
       </router-link>
     </div>
     <div
-         v-bind:class="['gallery__item', picture.size, 'rounded overflow-hidden shadow-lg']"
-         v-for="picture in pictures"
-         :key="picture.id"
+          v-bind:class="['gallery__item', picture.size, 'rounded overflow-hidden shadow-lg']"
+          v-for="picture in pictures"
+          :key="picture.id"
+          v-show="(loggedIn) || (picture.active && !loggedIn)"
           @mouseover="picture.hover = true"
           @mouseleave="picture.hover = false">
       <a class="cursor-pointer" @click.stop="showPicture(picture.id)">
@@ -31,7 +32,6 @@
         </div>
       </a>
     </div>
-    -{{loggedIn}}-
   </div>
 </template>
 
@@ -40,6 +40,7 @@
 import axios from 'axios';
 // eslint-disable-next-line import/extensions
 import bus from '../../bus.js';
+import authHeader from '../services/auth-header';
 
 export default {
   name: 'Gallery',
@@ -65,9 +66,12 @@ export default {
     this.listenToEvents();
   },
   methods: {
+    // Get full path of picture
     thumbUrl(filename) {
       return require(`../../../server/uploads/thumbnails/${filename}`);
     },
+
+    // Fetch all the pictures from the db to display them
     fetchPictures() {
       axios.get('http://localhost:3000/api/pictures').then((response) => {
         this.pictures = response.data;
@@ -77,45 +81,28 @@ export default {
         });
       });
     },
-    gridElementClass(pictureSize) {
-      let pictureSizeClass = '';
-      switch (pictureSize) {
-        case 'small':
-          pictureSizeClass = 'w-1/6';
-          break;
-        case 'medium':
-          pictureSizeClass = 'w-1/3';
-          break;
-        case 'large':
-          pictureSizeClass = 'w-full';
-          break;
-        default:
-          break;
-      }
-      pictureSizeClass = '';
-      return pictureSizeClass;
-    },
 
+    // Update the pictures in the grid after receiving an event refreshPicture
     listenToEvents() {
       bus.$on('refreshPicture', () => {
-        this.fetchPictures(); // update pictures
+        this.fetchPictures();
       });
     },
 
+    // Navigate to the picture clicked
     showPicture(picId) {
       this.$router.push(`/picture/${picId}`);
     },
 
+    // Navigate to the picture clicked in edit mode
     editPicture(picId) {
       this.$router.push(`/picture/${picId}#edit`);
-      // route vers la page picture/:id#edit
     },
 
+    // Disable a picture
     hidePicture(pictureId, picture) {
-      console.log('hidePicture');
-      // Update picture avec visibility = none et refresh en affichant cette image en grisée
       picture.active = !picture.active;
-      axios.put(`http://localhost:3000/api/picture/${pictureId}`, picture).then((response) => {
+      axios.put(`http://localhost:3000/api/picture/${pictureId}`, picture, { headers: authHeader() }).then((response) => {
         if (response.status === 200) {
           // this.pictures = this.pictures.filter(obj => obj.id !== pictureId);
           console.log(response.data.success);
@@ -123,10 +110,10 @@ export default {
       });
     },
 
+    // Delete picture after confirmation
     deletePicture(pictureId) {
-      // Pop-up confirmation de suppression, si oui on envoie un delete sur /picture/:id
       if (confirm('Etes-vous sûr de vouloir supprimer cette image ?')) {
-        axios.delete(`http://localhost:3000/api/picture/${pictureId}`).then((response) => {
+        axios.delete(`http://localhost:3000/api/picture/${pictureId}`, { headers: authHeader() }).then((response) => {
           if (response.status === 200) {
             this.pictures = this.pictures.filter(obj => obj.id !== pictureId);
           }
@@ -139,9 +126,6 @@ export default {
 
 <style>
 
-body {
-  background: #2d3748;
-}
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

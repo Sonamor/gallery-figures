@@ -2,10 +2,8 @@
 import Vue from 'vue';
 import Router from 'vue-router';
 import Picture from './views/Picture.vue';
-import Figure from './views/Figure.vue';
-
-import Home from './views/Home.vue';
-import LoginBis from './views/LoginBis.vue';
+import Gallery from './views/Gallery.vue';
+import Login from './views/Login.vue';
 
 Vue.use(Router);
 
@@ -14,72 +12,51 @@ const router = new Router({
   base: process.env.BASE_URL,
   routes: [
     {
+      // Homepage
       path: '/',
       name: 'home',
-      component: Home,
+      component: Gallery,
     },
     {
+      // Homepage
       path: '/home',
-      component: Home,
+      component: Gallery,
     },
     {
-      path: '/loginbis',
-      component: LoginBis,
+      // Gallery
+      path: '/gallery',
+      name: 'gallery',
+      component: Gallery,
     },
     {
-      path: '/profile',
-      name: 'profile',
-      // lazy-loaded
-      component: () => import('./views/Profile.vue'),
-    },
-    {
-      path: '/admin',
-      name: 'admin',
-      // lazy-loaded
-      component: () => import('./views/BoardAdmin.vue'),
-    },
-    {
-      path: '/mod',
-      name: 'moderator',
-      // lazy-loaded
-      component: () => import('./views/BoardModerator.vue'),
-    },
-    {
-      path: '/user',
-      name: 'user',
-      // lazy-loaded
-      component: () => import('./views/BoardUser.vue'),
-    },
-    {
-      path: '/figure',
-      name: 'figure',
-      component: Figure,
-    },
-    {
+      // Selected picture
       path: '/picture/:id',
       name: 'picturea',
       component: Picture,
     },
     {
+      // Adding picture page
       path: '/picture/add',
       name: 'picture_add',
       component: Picture,
     },
     {
+      // Login page
       path: '/login',
       name: 'login',
-      component: () => import('./views/Login.vue'),
+      component: Login,
     },
   ],
 });
 
+// Before routing, check if the page requires a login
 router.beforeEach((to, from, next) => {
-  const publicPages = ['/login', '/home', '/figure'];
-  const authRequired = !publicPages.includes(to.path);
+  const privatePages = ['/picture/add'];
+  const authRequired = (privatePages.includes(to.path) || to.hash === '#edit');
   const loggedIn = localStorage.getItem('user');
 
-  // trying to access a restricted page + not logged in
-  // redirect to login page
+  // trying to access a restricted page and check if logged in
+  // if false redirect to login page
   if (authRequired && !loggedIn) {
     next('/login');
   } else {
