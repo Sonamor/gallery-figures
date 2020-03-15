@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+    <Alerts />
     <nav class="text-right pr-2 text-white text-sm">
       <div v-if="!currentUser">
         <router-link to="/login" class="text-xs hover:text-blue-700 ml-4 cursor-pointer">
@@ -21,8 +22,13 @@
 
 <script>
 
+import Alerts from '@/components/Alerts.vue';
+
 export default {
   name: 'App',
+  components: {
+    Alerts
+  },
   data() {
     return {};
   },
