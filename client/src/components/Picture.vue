@@ -49,7 +49,7 @@
 <script>
 import axios from 'axios';
 import FileUpload from './FileUpload.vue';
-import authHeader from '../services/auth-header';
+import authHeader from '../services/authHeader';
 
 export default {
   name: 'Picture',
@@ -105,36 +105,36 @@ export default {
     },
 
     // Navigate to the same layout but in edit mode
-    editPicture(currentPicId) {
+    editPicture(currentPictureId) {
       this.mode = 'edit';
-      this.$router.push(`/picture/${currentPicId}#edit`);
+      this.$router.push(`/picture/${currentPictureId}#edit`);
     },
 
     // Navigate to next or previous picture
-    showPicture(currentPicId, increment) {
-      currentPicId = Number(currentPicId);
+    showPicture(currentPictureId, increment) {
+      currentPictureId = Number(currentPictureId);
 
-      const maxPicId = this.pictures[this.pictures.length - 1].id;
-      const minPicId = this.pictures[0].id;
+      const maxPictureId = this.pictures[this.pictures.length - 1].id;
+      const minPictureId = this.pictures[0].id;
 
-      let nextPicId = 0;
+      let nextPictureId = 0;
 
       // If a picture is missing (eg : has been deleted completely in db) or is disabled and user is not logged in, skip to the n+1/-1 next picture
-      if (currentPicId < minPicId) {
-        nextPicId = maxPicId;
-      } else if (currentPicId > maxPicId) {
-        nextPicId = minPicId;
+      if (currentPictureId < minPictureId) {
+        nextPictureId = maxPictureId;
+      } else if (currentPictureId > maxPictureId) {
+        nextPictureId = minPictureId;
       } else {
-        const nextPic = this.pictures.find(picture => picture.id === Number(currentPicId + increment));
+        const nextPic = this.pictures.find(picture => picture.id === Number(currentPictureId + increment));
 
         if (typeof nextPic === 'undefined' || (typeof nextPic !== 'undefined' && !this.loggedIn && nextPic.active === false)) {
-          this.showPicture(currentPicId + increment, increment);
+          this.showPicture(currentPictureId + increment, increment);
           return;
         }
-        nextPicId = nextPic.id;
+        nextPictureId = nextPic.id;
       }
 
-      this.$router.push(`/picture/${nextPicId}`);
+      this.$router.push(`/picture/${nextPictureId}`);
     },
 
     // Set the mode of the layout
@@ -183,7 +183,7 @@ export default {
         await axios.post('http://localhost:3000/api/pictures', {
           id: (this.mode === 'edit' ? this.picture.id : null), title: this.pic_title, filename: this.pic_filename, information: this.pic_information, size: this.pic_size, mode: this.mode,
         }, { headers: authHeader() }).then((response) => {
-          if (response.data.success) {
+          if (response.status === 200) {
             this.$router.push('/gallery');
           }
         });

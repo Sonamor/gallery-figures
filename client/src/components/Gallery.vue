@@ -40,7 +40,7 @@
 import axios from 'axios';
 // eslint-disable-next-line import/extensions
 import bus from '../../bus.js';
-import authHeader from '../services/auth-header';
+import authHeader from '../services/authHeader';
 
 export default {
   name: 'Gallery',
@@ -90,13 +90,13 @@ export default {
     },
 
     // Navigate to the picture clicked
-    showPicture(picId) {
-      this.$router.push(`/picture/${picId}`);
+    showPicture(pictureId) {
+      this.$router.push(`/picture/${pictureId}`);
     },
 
     // Navigate to the picture clicked in edit mode
-    editPicture(picId) {
-      this.$router.push(`/picture/${picId}#edit`);
+    editPicture(pictureId) {
+      this.$router.push(`/picture/${pictureId}#edit`);
     },
 
     // Disable a picture
@@ -105,7 +105,7 @@ export default {
       axios.put(`http://localhost:3000/api/picture/${pictureId}`, picture, { headers: authHeader() }).then((response) => {
         if (response.status === 200) {
           // this.pictures = this.pictures.filter(obj => obj.id !== pictureId);
-          console.log(response.data.success);
+          // console.log(response.data.success);
         }
       });
     },

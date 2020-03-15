@@ -1,11 +1,13 @@
 Bug 
 
-A faire :
-- Messages d'erreur (file too big, no token)
-- Code style 
-- Mettre un warning si post validé sans image
-- wysiwyg
-- form validation
-- design
-- send image when click on enregistrer
+En cours :
 - contrôle image gif
+- send image when click on enregistrer
+- form validation
+- Mettre un warning si post validé sans image
+- Messages d'erreur (file too big, no token) --> faire un composant
+- Code style 
+
+A faire :
+- wysiwyg
+- design

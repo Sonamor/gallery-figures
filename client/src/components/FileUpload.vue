@@ -152,7 +152,7 @@ import axios from 'axios';
 import VueCropper from 'vue-cropperjs';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import 'cropperjs/dist/cropper.css';
-import authHeader from '../services/auth-header';
+import authHeader from '../services/authHeader';
 
 export default {
   name: 'FileUpload',

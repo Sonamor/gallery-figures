@@ -1,5 +1,6 @@
 const createError = require('http-errors');
 const express = require('express');
+const app = express();
 const history = require('connect-history-api-fallback');
 const path = require('path');
 const mongoose = require('mongoose');
@@ -10,14 +11,13 @@ const flash = require('connect-flash');
 const bodyParser = require("body-parser");
 
 const config = require('./config/Config');
+const routes = require('./routes/Routes');
 
-const app = express();
-
+// Connect to database
 mongoose.connect(config.DB, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
-
 
 // parse requests of content-type - application/json
 app.use(bodyParser.json());
@@ -37,14 +37,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(flash());
 
-var User = require('./models/User');
-
-
-
-const routes = require('./routes/Routes');
-require('./routes/Auth')(app);
-require('./routes/User')(app);
-
+// Use the routes and add prefix api
 app.use('/api', routes);
 
 // catch 404 and forward to error handler
@@ -64,6 +57,5 @@ app.use((err, req, res) => {
 });
 
 app.listen(config.APP_PORT); // Listen on port defined in environment
-
 
 module.exports = app;

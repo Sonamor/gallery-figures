@@ -27,7 +27,7 @@ class PictureRepository {
     return this.model.find();
   }
 
-  // Return all pictures
+  // Return all pictures based on the condition
   findByField(keyValue) {
     return this.model.find(keyValue);
   }
@@ -43,16 +43,13 @@ class PictureRepository {
   }
 
   deleteByField(keyValue){
-    return this.model.deleteOne(keyValue, function (err) {
-      if (err) return handleError(err);
-      // deleted at most one tank document
-    });
+    return this.model.deleteOne(keyValue);
   }
 
   // Update picture
-  async updateById(picId, object) {
+  async updateById(pictureId, object) {
 
-    let doc = await this.model.findOne({ id: picId });
+    let doc = await this.model.findOne({ id: pictureId });
 
     doc.title = object.title;
     doc.filename = object.filename;

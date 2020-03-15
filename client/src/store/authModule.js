@@ -1,6 +1,6 @@
 /* eslint-disable no-shadow */
 /* eslint-disable import/prefer-default-export */
-import AuthService from '../services/auth.service';
+import AuthService from '../services/authService';
 
 const user = JSON.parse(localStorage.getItem('user'));
 const initialState = user
