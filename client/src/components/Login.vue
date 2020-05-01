@@ -44,13 +44,8 @@
           </button>
         </div>
       </form>
-      <div v-if="message" class="px-4 py-3 rounded relative border text-xs bg-red-100 border-red-400 text-red-700" role="alert">
-        <strong class="font-bold">Connexion impossible</strong>
-        <span class="block">{{ message }}</span>
-        <span class="absolute top-0 bottom-0 right-0">
-          <svg class="fill-current h-6 w-6 cross-svg" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><title>Close</title><path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z" @click.self="closeAlert"/></svg>
-        </span>
-      </div>
+
+      <Alerts :alerts="alerts" />
     </div>
   </div>
 </template>
@@ -58,16 +53,19 @@
 
 <script>
 import User from '../models/user';
+import Alerts from '@/components/Alerts.vue';
 
 export default {
   name: 'Login',
+  components: {
+    Alerts,
+  },
   data() {
     return {
       user: new User('', ''),
       loading: false,
-      message: '',
       errors: new Map(),
-      alertColor: '',
+      alerts: [],
     };
   },
   computed: {
@@ -94,9 +92,12 @@ export default {
           },
           (error) => {
             this.loading = false;
-            this.message = (error.response && error.response.data.message)
+            this.alerts.push({
+              message: (error.response && error.response.data.message)
               || error.message
-              || error.toString();
+              || error.toString(),
+              hasError: true,
+            });
           },
         );
       }
@@ -118,5 +119,9 @@ export default {
     right: 0;
     margin: auto;
     text-align: center;
+  }
+
+  .login-container{
+    top: 130px;
   }
 </style>

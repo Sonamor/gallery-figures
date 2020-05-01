@@ -1,5 +1,6 @@
 <template>
   <div class="lightbox fixed w-screen h-screen xl:p-16 xl:px-48 lg:p-10 lg:px-24 md:p-6 md:px-20 p-4 px-16 top-0 left-0" @mousedown.self="closeLightbox">
+    <Alerts :alerts="alerts"/>
     <div class="lb-container w-full h-full flex lg:flex-row flex-col justify-center">
       <div class="overflow-x-auto flex-1 flex-grow max-w-full max-h-full bg-white rounded relative text-center relative" v-if="(typeof this.picture === 'undefined')">
         <div class="absolute top30 w-full">
@@ -10,22 +11,22 @@
       </div>
       <div class="overflow-x-auto flex-1 flex-grow max-w-full max-h-full bg-white rounded-l relative" v-if="(typeof this.picture !== 'undefined')">
         <div class="bg-white" v-if="['edit', 'add'].includes(mode)">
-          <FileUpload @uploadedFile="getUploadedFile"/>
+          <FileUpload @uploadedFile="getUploadedFile" ref="fileUpload"/>
         </div>
         <div class="overflow-hidden bg-gray-300 bg-contain bg-no-repeat lb-picture w-full" v-if="['edit', 'show'].includes(mode)" v-bind:style="{ height: (mode === 'edit' ? '82%' : '100%'), backgroundImage: 'url(' + (picture ? pictureUrl(picture.filename) : '') + ')' }">
           <div class="w-full font-bold m-1 text-gray-900 mx-2" v-if="mode === 'edit'">Image remplacée</div>
         </div>
       </div>
-      <div v-bind:class="['lb-information flex-1 xl:max-w-md lg:max-w-xs w-full border border-solid border-gray-300 text-center p-4 overflow-auto rounded-r relative', (picture.active === false ? 'bg-red-300': 'bg-white')]" v-if="(typeof this.picture !== 'undefined')">
+      <div v-bind:class="['lb-information flex-1 xl:max-w-md lg:max-w-xs w-full border border-solid border-gray-300 p-4 overflow-auto rounded-r relative', (picture.active === false ? 'bg-red-300': 'bg-white')]" v-if="(typeof this.picture !== 'undefined')">
         <button class="py-1 px-2 text-xs absolute top-0 right-0 hover:text-blue-700" v-if="loggedIn && mode === 'show' && picture" @click="editPicture(picture.id)">
           Modifier
         </button>
-        <span class="lightbox-title font-bold text-4xl" v-if="mode === 'show' && picture && picture.title">{{ picture.title }}</span>
-        <p class="mt-4" v-if="picture && picture.information && mode === 'show'" v-html="picture.information"></p>
-        <form v-if="['edit', 'add'].includes(mode)" class="relative min-h-full" @submit.prevent="onSubmit">
+        <span class="lightbox-title block w-full text-center font-bold text-4xl" v-if="mode === 'show' && picture && picture.title">{{ picture.title }}</span>
+        <p id="pic_information" class="mt-4" v-if="picture && picture.information && mode === 'show'" v-html="picture.information"></p>
+        <form v-if="['edit', 'add'].includes(mode)" class="relative min-h-full" @submit.prevent="onSubmit" ref="pictureForm">
           <input type="hidden" v-model="pic_filename">
           <input type="text" v-model="pic_title" class="w-full font-bold text-4xl border-0 border-b border-gray-300" placeholder="Saisir un titre">
-          <textarea v-model="pic_information" class="w-full mt-5 border-0 border-b border-gray-300" placeholder="Saisir des informations"></textarea>
+          <TextEditor v-model="pic_information" />
           <div class="text-left text-gray-500">
             <label for="pic-size">Taille de la miniature</label>
             <select id="pic-size" v-model="pic_size" class="border-0 border-b border-gray-300 ml-8">
@@ -34,10 +35,10 @@
               <option value="large">Grande</option>
             </select>
           </div>
-          <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline absolute bottom-0 right-0">
-            Enregistrer
-          </button>
         </form>
+        <button v-if="['edit', 'add'].includes(mode)" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline absolute bottom-0 right-0 m-2" @click="initSubmit">
+          Enregistrer
+        </button>
       </div>
     </div>
     <div class="lb-chevron-left" @click.self="showPicture(picture.id, -1)" v-if="mode === 'show' && (typeof this.picture !== 'undefined')"></div>
@@ -50,11 +51,14 @@
 import axios from 'axios';
 import FileUpload from './FileUpload.vue';
 import authHeader from '../services/authHeader';
+import Alerts from '@/components/Alerts.vue';
+import TextEditor from '@/components/TextEditor.vue';
+import bus from '../../bus';
 
 export default {
   name: 'Picture',
   components: {
-    FileUpload,
+    FileUpload, Alerts, TextEditor,
   },
   data() {
     return {
@@ -67,6 +71,7 @@ export default {
       pic_title: '',
       pic_information: '',
       pic_size: 'small',
+      alerts: [],
     };
   },
   computed: {
@@ -175,6 +180,11 @@ export default {
     // display the uploaded file
     getUploadedFile(value) {
       this.pic_filename = value;
+      this.onSubmit();
+    },
+
+    initSubmit() {
+      bus.$emit('fileUploadSubmit');
     },
 
     // Add or edit a picture
@@ -185,11 +195,12 @@ export default {
         }, { headers: authHeader() }).then((response) => {
           if (response.status === 200) {
             this.$router.push('/gallery');
+          } else {
+            this.alerts.push({ message: response.message, hasError: true });
           }
         });
       } catch (err) {
-        /* this.message = err.response.data.error;
-        this.hasError = true; */
+        this.alerts.push({ message: err.response.data.message, hasError: true });
       }
     },
   },
@@ -242,4 +253,71 @@ export default {
   .top30{
     top:30%;
   }
+
+/* TODO */
+ul[data-type="todo_list"] {
+  padding-left: 0;
+}
+li[data-type="todo_item"] {
+  display: flex;
+  flex-direction: row;
+}
+.todo-checkbox {
+  border: 2px solid black;
+  height: 0.9em;
+  width: 0.9em;
+  box-sizing: border-box;
+  margin-right: 10px;
+  margin-top: 0.3rem;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+  border-radius: 0.2em;
+  background-color: transparent;
+  transition: 0.4s background;
+}
+.todo-content {
+  flex: 1;
+}
+.todo-content > p:last-of-type {
+  margin-bottom: 0;
+}
+.todo-content > ul[data-type="todo_list"] {
+  margin: .5rem 0;
+}
+
+li[data-done="true"] > .todo-content > p {
+  text-decoration: line-through;
+}
+
+li[data-done="true"] > .todo-checkbox {
+  background-color: black;
+}
+li[data-done="false"] {
+  text-decoration: none;
+}
+
+/* indent */
+p[data-indent="1"] {
+  margin-left: 30px!important;
+}
+
+/* text align */
+p[data-text-align="center"] {
+  text-align:center;
+}
+p[data-text-align="right"] {
+  text-align:right;
+}
+p[data-text-align="justify"] {
+  text-align:justify;
+}
+
+ul{
+  list-style:disc !important;
+}
+
+ol{
+  list-style:decimal !important;
+}
 </style>

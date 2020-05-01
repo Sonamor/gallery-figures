@@ -26,7 +26,7 @@
           <div v-bind:class="['px-4 py-2', (picture.active === false ? 'bg-red-300': 'bg-white')]">
             <div class="font-bold text-base mb-1">{{ picture.title }}</div>
             <p class="text-gray-700 text-xs truncate">
-              {{ picture.information }}
+              {{ picture.subtitle }}
             </p>
           </div>
         </div>
@@ -100,24 +100,36 @@ export default {
     },
 
     // Disable a picture
-    hidePicture(pictureId, picture) {
+    async hidePicture(pictureId, picture) {
       picture.active = !picture.active;
-      axios.put(`http://localhost:3000/api/picture/${pictureId}`, picture, { headers: authHeader() }).then((response) => {
-        if (response.status === 200) {
-          // this.pictures = this.pictures.filter(obj => obj.id !== pictureId);
-          // console.log(response.data.success);
-        }
-      });
+      try {
+        await axios.put(`http://localhost:3000/api/picture/${pictureId}`, picture, { headers: authHeader() }).then((response) => {
+          if (response.status === 200) {
+            this.alerts.push({ message: response.message, hasError: false });
+          } else {
+            this.alerts.push({ message: response.message, hasError: true });
+          }
+        });
+      } catch (err) {
+        this.alerts.push({ message: err.response.data.message, hasError: true });
+      }
     },
 
     // Delete picture after confirmation
-    deletePicture(pictureId) {
+    async deletePicture(pictureId) {
       if (confirm('Etes-vous sûr de vouloir supprimer cette image ?')) {
-        axios.delete(`http://localhost:3000/api/picture/${pictureId}`, { headers: authHeader() }).then((response) => {
-          if (response.status === 200) {
-            this.pictures = this.pictures.filter(obj => obj.id !== pictureId);
-          }
-        });
+        try {
+          await axios.delete(`http://localhost:3000/api/picture/${pictureId}`, { headers: authHeader() }).then((response) => {
+            if (response.status === 200) {
+              this.pictures = this.pictures.filter(obj => obj.id !== pictureId);
+              this.alerts.push({ message: response.message, hasError: false });
+            } else {
+              this.alerts.push({ message: response.message, hasError: true });
+            }
+          });
+        } catch (err) {
+          this.alerts.push({ message: err.response.data.message, hasError: true });
+        }
       }
     },
   },

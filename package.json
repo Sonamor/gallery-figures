@@ -29,7 +29,8 @@
     "mongoose": "^5.7.3",
     "morgan": "~1.9.1",
     "mysql": "^2.17.1",
-    "pug": "2.0.0-beta11"
+    "pug": "2.0.0-beta11",
+    "tiptap": "^1.26.8"
   },
   "devDependencies": {
     "eslint": "^6.0.1",
