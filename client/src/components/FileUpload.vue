@@ -253,7 +253,7 @@ export default {
         formData.append('file', blob, this.file.name);
 
         try {
-          await axios.post('http://localhost:3000/api/upload', formData, { headers: authHeader() });
+          await axios.post('/api/upload', formData, { headers: authHeader() });
           this.alerts.push({ message: 'Image sauvegardée', hasError: false });
           this.$emit('uploadedFile', this.file.name);
         } catch (err) {

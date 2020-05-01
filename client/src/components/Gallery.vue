@@ -73,7 +73,7 @@ export default {
 
     // Fetch all the pictures from the db to display them
     fetchPictures() {
-      axios.get('http://localhost:3000/api/pictures').then((response) => {
+      axios.get('/api/pictures').then((response) => {
         this.pictures = response.data;
         this.pictures.forEach((picture) => {
           this.$set(picture, 'hover', 'false');
@@ -103,7 +103,7 @@ export default {
     async hidePicture(pictureId, picture) {
       picture.active = !picture.active;
       try {
-        await axios.put(`http://localhost:3000/api/picture/${pictureId}`, picture, { headers: authHeader() }).then((response) => {
+        await axios.put(`/api/picture/${pictureId}`, picture, { headers: authHeader() }).then((response) => {
           if (response.status === 200) {
             this.alerts.push({ message: response.message, hasError: false });
           } else {
@@ -119,7 +119,7 @@ export default {
     async deletePicture(pictureId) {
       if (confirm('Etes-vous sûr de vouloir supprimer cette image ?')) {
         try {
-          await axios.delete(`http://localhost:3000/api/picture/${pictureId}`, { headers: authHeader() }).then((response) => {
+          await axios.delete(`/api/picture/${pictureId}`, { headers: authHeader() }).then((response) => {
             if (response.status === 200) {
               this.pictures = this.pictures.filter(obj => obj.id !== pictureId);
               this.alerts.push({ message: response.message, hasError: false });

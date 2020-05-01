@@ -1,7 +1,7 @@
 /* eslint-disable class-methods-use-this */
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3000/api/auth/';
+const API_URL = '/api/auth/';
 
 // Class used to handle the authentification of the users
 class AuthService {

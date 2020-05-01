@@ -156,7 +156,7 @@ export default {
     // Fetch pictures from the database
     fetchPictures() {
       const options = (!this.loggedIn) ? { active: true } : {};
-      axios.get('http://localhost:3000/api/pictures', {
+      axios.get('/api/pictures', {
         params: options,
       }).then((response) => {
         this.pictures = response.data;
@@ -190,7 +190,7 @@ export default {
     // Add or edit a picture
     async onSubmit() {
       try {
-        await axios.post('http://localhost:3000/api/pictures', {
+        await axios.post('/api/pictures', {
           id: (this.mode === 'edit' ? this.picture.id : null), title: this.pic_title, filename: this.pic_filename, information: this.pic_information, size: this.pic_size, mode: this.mode,
         }, { headers: authHeader() }).then((response) => {
           if (response.status === 200) {
