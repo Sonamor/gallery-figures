@@ -1,36 +1,41 @@
 <template>
-  <div class="gallery">
-    <div class="rounded overflow-hidden shadow-lg" v-show="loggedIn != false">
-      <router-link to="/picture/add" @click.self="addPicture">
-        <div class="bg-white p-16 hover:bg-gray-400">
-          <img src="../assets/icons/xl-plus.png" class="lg-plus" title="Ajouter une image" alt="Ajouter une image">
-        </div>
-      </router-link>
+  <div>
+    <div class="w-full text-center text-blue-300" v-show="pictures.length <= 0 && loggedIn == false">
+      <p class="text-3xl font-bold">Aucune image pour le moment, revenez plus tard !</p>
     </div>
-    <div
-          v-bind:class="['gallery__item', picture.size, 'rounded overflow-hidden shadow-lg']"
-          v-for="picture in pictures"
-          :key="picture.id"
-          v-show="(loggedIn) || (picture.active && !loggedIn)"
-          @mouseover="picture.hover = true"
-          @mouseleave="picture.hover = false">
-      <a class="cursor-pointer" @click.stop="showPicture(picture.id)">
-        <div class="flex flex-col h-full bg-white relative">
-          <div class="gallery__actions"
-            v-show="loggedIn != false && picture.hover === true" >
-            <img class="action__edit" src="../assets/icons/edit.png" @click.stop="editPicture(picture.id)">
-            <img class="action__hide" src="../assets/icons/hide.png" @click.stop="hidePicture(picture.id, picture)">
-            <img class="action__cross" src="../assets/icons/cross.png" @click.stop="deletePicture(picture.id)">
+    <div class="gallery">
+      <div class="rounded overflow-hidden shadow-lg" v-show="loggedIn != false">
+        <router-link to="/picture/add" @click.self="addPicture">
+          <div class="bg-white p-16 hover:bg-gray-400">
+            <img src="../assets/icons/xl-plus.png" class="lg-plus" title="Ajouter une image" alt="Ajouter une image">
           </div>
-          <img :src="thumbUrl(picture.filename)" class="gallery__img w-full" :title="picture.title" :alt="picture.title">
-          <div v-bind:class="['px-4 py-2', (picture.active === false ? 'bg-red-300': 'bg-white')]">
-            <div class="font-bold text-base mb-1">{{ picture.title }}</div>
-            <p class="text-gray-700 text-xs truncate">
-              {{ picture.subtitle }}
-            </p>
+        </router-link>
+      </div>
+      <div
+            v-bind:class="['gallery__item', picture.size, 'rounded overflow-hidden shadow-lg']"
+            v-for="picture in pictures"
+            :key="picture.id"
+            v-show="(loggedIn) || (picture.active && !loggedIn)"
+            @mouseover="picture.hover = true"
+            @mouseleave="picture.hover = false">
+        <a class="cursor-pointer" @click.stop="showPicture(picture.id)">
+          <div class="flex flex-col h-full bg-white relative">
+            <div class="gallery__actions"
+              v-show="loggedIn != false && picture.hover === true" >
+              <img class="action__edit" src="../assets/icons/edit.png" @click.stop="editPicture(picture.id)">
+              <img class="action__hide" src="../assets/icons/hide.png" @click.stop="hidePicture(picture.id, picture)">
+              <img class="action__cross" src="../assets/icons/cross.png" @click.stop="deletePicture(picture.id)">
+            </div>
+            <img :src="thumbUrl(picture.filename)" class="gallery__img w-full" :title="picture.title" :alt="picture.title" @error="imageLoadError">
+            <div v-bind:class="['px-4 py-2', (picture.active === false ? 'bg-red-300': 'bg-white')]">
+              <div class="font-bold text-base mb-1">{{ picture.title }}</div>
+              <p class="text-gray-700 text-xs truncate">
+                {{ picture.subtitle }}
+              </p>
+            </div>
           </div>
-        </div>
-      </a>
+        </a>
+      </div>
     </div>
   </div>
 </template>
@@ -38,8 +43,7 @@
 <script>
 
 import axios from 'axios';
-// eslint-disable-next-line import/extensions
-import bus from '../../bus.js';
+import bus from '../../bus';
 import authHeader from '../services/authHeader';
 
 export default {
@@ -68,12 +72,17 @@ export default {
   methods: {
     // Get full path of picture
     thumbUrl(filename) {
-      return require(`../../../server/uploads/thumbnails/${filename}`);
+      return `${process.env.VUE_APP_S3_EXTERNAL_BASE_URL}/pictures/thumbnails/${filename}`;
+    },
+
+    // If the image link is broken, show placeholder
+    imageLoadError(event) {
+      event.target.src = require('../assets/icons/img-404.png');
     },
 
     // Fetch all the pictures from the db to display them
     fetchPictures() {
-      axios.get('/api/pictures').then((response) => {
+      axios.get(`${process.env.VUE_APP_API_ENTRY_URL}/pictures`).then((response) => {
         this.pictures = response.data;
         this.pictures.forEach((picture) => {
           this.$set(picture, 'hover', 'false');
@@ -103,7 +112,7 @@ export default {
     async hidePicture(pictureId, picture) {
       picture.active = !picture.active;
       try {
-        await axios.put(`/api/picture/${pictureId}`, picture, { headers: authHeader() }).then((response) => {
+        await axios.put(`${process.env.VUE_APP_API_ENTRY_URL}/picture/${pictureId}`, picture, { headers: authHeader() }).then((response) => {
           if (response.status === 200) {
             this.alerts.push({ message: response.message, hasError: false });
           } else {
@@ -119,7 +128,7 @@ export default {
     async deletePicture(pictureId) {
       if (confirm('Etes-vous sûr de vouloir supprimer cette image ?')) {
         try {
-          await axios.delete(`/api/picture/${pictureId}`, { headers: authHeader() }).then((response) => {
+          await axios.delete(`${process.env.VUE_APP_API_ENTRY_URL}/picture/${pictureId}`, { headers: authHeader() }).then((response) => {
             if (response.status === 200) {
               this.pictures = this.pictures.filter(obj => obj.id !== pictureId);
               this.alerts.push({ message: response.message, hasError: false });

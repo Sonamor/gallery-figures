@@ -1,7 +1,12 @@
 
 const pictureRepository = require('../repositories/PictureRepository');
 const resizeOptimizeImages = require('resize-optimize-images');
+const config = require('../config/Config');
 const fs = require('fs');
+const sharp = require("sharp");
+const aws = require('aws-sdk');
+
+aws.config.region = 'eu-west-3';
 
 // Fetch all the pictures relatively to the condition
 exports.getAllPictures = (req, res) => {
@@ -138,4 +143,60 @@ exports.uploadPicture = (req, res) => {
     })();
   });
   res.status(200).send({ message: "Image téléchargée" });
+};
+
+// Upload picture on S3 bucket
+exports.uploadPictureS3 = (req, res) => {
+
+  const S3_BUCKET_NAME = config.S3_BUCKET_NAME;
+
+  if ( req.userId === null )
+    res.status(403).send({ message: "Non autorisé" });
+
+  const file = req.file;
+
+  // To connect to S3
+  let s3bucket = new aws.S3({
+    Bucket: S3_BUCKET_NAME,
+    accessKeyId: config.AWSAccessKeyId,
+    secretAccessKey: config.AWSSecretKey
+  });
+
+  // Parameters of the file to upload
+  var params = {
+    Bucket: S3_BUCKET_NAME,
+    Key: 'pictures/' + file.originalname.replace(/ /g,"_"),
+    Body: file.buffer,
+    ContentType: file.mimetype,
+    ACL: 'public-read'
+  };
+
+  // Upload on S3
+  s3bucket.upload(params, function (err, data) {
+    if (err)
+      res.status(500).send({ message: "Erreur lors de la sauvegarde de l'image" });
+  });
+
+
+  // Making a thumbnail copy of the picture to make it smaller and upload it somewhere else on S3
+  sharp(file.buffer)
+    .resize({ width: 480 })
+    .jpeg({ quality: 90 })
+    .toBuffer()
+    .then(dataThumbnail => {
+      var params_thumbnails = {
+        Bucket: S3_BUCKET_NAME,
+        Key: 'pictures/thumbnails/' + file.originalname.replace(/ /g,"_"),
+        Body: dataThumbnail,
+        ContentType: file.mimetype,
+        ACL: 'public-read'
+      };
+
+      s3bucket.upload(params_thumbnails, function (err, data) {
+        if (err)
+          res.status(500).send({ message: "Erreur lors de la sauvegarde de l'image" });
+      });
+    })
+    .catch(err => { res.status(500).send({ message: "Erreur lors de la sauvegarde de l'image" }); });
+  res.status(200).send({ message: "Image sauvegardée" });
 };

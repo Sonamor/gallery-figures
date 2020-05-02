@@ -1,15 +1,14 @@
-/* eslint-disable import/prefer-default-export */
 import Vue from 'vue';
 import Router from 'vue-router';
 import Picture from './views/Picture.vue';
 import Gallery from './views/Gallery.vue';
 import Login from './views/Login.vue';
+import PageNotFound from './views/PageNotFound.vue';
 
 Vue.use(Router);
 
 const router = new Router({
   mode: 'history',
-  base: process.env.BASE_URL,
   routes: [
     {
       // Homepage
@@ -31,7 +30,7 @@ const router = new Router({
     {
       // Selected picture
       path: '/picture/:id',
-      name: 'picturea',
+      name: 'picture',
       component: Picture,
     },
     {
@@ -45,6 +44,11 @@ const router = new Router({
       path: '/login',
       name: 'login',
       component: Login,
+    },
+    {
+      path: '*',
+      name: 'page_not_found',
+      component: PageNotFound,
     },
   ],
 });

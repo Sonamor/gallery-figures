@@ -17,6 +17,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "2.x",
     "bcrypt": "^3.0.8",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.19.0",
@@ -25,7 +26,8 @@
     "cookie-parser": "~1.4.4",
     "cors": "^2.8.5",
     "debug": "~2.6.9",
-    "dotenv": "^8.0.0",
+    "dotenv": "^8.2.0",
+    "ejs": "2.x",
     "express": "^4.17.1",
     "express-session": "^1.17.0",
     "http-errors": "~1.6.3",
@@ -41,7 +43,8 @@
     "passport-local": "^1.0.0",
     "passport-local-mongoose": "^6.0.1",
     "pug": "2.0.0-beta11",
-    "resize-optimize-images": "^1.1.0"
+    "resize-optimize-images": "^1.1.0",
+    "sharp": "^0.25.2"
   },
   "devDependencies": {
     "eslint": "^6.0.1",

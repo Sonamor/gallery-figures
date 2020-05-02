@@ -33,9 +33,6 @@ export default {
   margin: 0 .3rem;
   top: -.05rem;
   fill: currentColor;
-  // &.has-align-fix {
-  // top: -.1rem;
-  // }
   &__svg {
     display: inline-block;
     vertical-align: top;

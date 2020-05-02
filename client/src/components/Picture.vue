@@ -94,8 +94,7 @@ export default {
     pictureUrl(filename) {
       if (filename) {
         try {
-          const images = require.context('../../../server/uploads/', false, /\.jpg|.png|.jpeg$/);
-          return images(`./${filename}`);
+          return `${process.env.VUE_APP_S3_EXTERNAL_BASE_URL}/pictures/${filename}`;
         } catch (e) {
           if (e.name !== 'ModuleNotFoundError') throw e; // handle false-positives
           return require('../assets/logo.png');
@@ -156,7 +155,7 @@ export default {
     // Fetch pictures from the database
     fetchPictures() {
       const options = (!this.loggedIn) ? { active: true } : {};
-      axios.get('/api/pictures', {
+      axios.get(`${process.env.VUE_APP_API_ENTRY_URL}/pictures`, {
         params: options,
       }).then((response) => {
         this.pictures = response.data;
@@ -179,7 +178,10 @@ export default {
 
     // display the uploaded file
     getUploadedFile(value) {
-      this.pic_filename = value;
+      // If false, means the post is updated without uploading a new picture
+      if (value !== false) {
+        this.pic_filename = value;
+      }
       this.onSubmit();
     },
 
@@ -190,10 +192,12 @@ export default {
     // Add or edit a picture
     async onSubmit() {
       try {
-        await axios.post('/api/pictures', {
+        await axios.post(`${process.env.VUE_APP_API_ENTRY_URL}/pictures`, {
           id: (this.mode === 'edit' ? this.picture.id : null), title: this.pic_title, filename: this.pic_filename, information: this.pic_information, size: this.pic_size, mode: this.mode,
         }, { headers: authHeader() }).then((response) => {
           if (response.status === 200) {
+            // eslint-disable-next-line func-names
+            setTimeout(() => true, 1000);
             this.$router.push('/gallery');
           } else {
             this.alerts.push({ message: response.message, hasError: true });

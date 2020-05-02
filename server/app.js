@@ -1,3 +1,4 @@
+
 const createError = require('http-errors');
 const express = require('express');
 const app = express();
@@ -9,6 +10,10 @@ const logger = require('morgan');
 const cors = require('cors');
 const flash = require('connect-flash');
 const bodyParser = require("body-parser");
+
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
 
 const config = require('./config/Config');
 const routes = require('./routes/Routes');

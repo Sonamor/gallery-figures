@@ -46,7 +46,9 @@ module.exports = {
       "invalid-first-character-of-tag-name": false
     }],
     "import/no-dynamic-require": true,
-    "global-require": 0
+    "global-require": 0,
+    "import/prefer-default-export": false,
+    "no-shadow": 0
   },
   parserOptions: {
     parser: 'babel-eslint',

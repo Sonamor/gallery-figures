@@ -1,7 +1,7 @@
 /* eslint-disable class-methods-use-this */
 import axios from 'axios';
 
-const API_URL = '/api/auth/';
+const API_URL = `${process.env.VUE_APP_API_ENTRY_URL}/auth/`;
 
 // Class used to handle the authentification of the users
 class AuthService {

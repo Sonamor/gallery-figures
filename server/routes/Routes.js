@@ -42,27 +42,26 @@ const fileFilter = (req, file, cb) => {
   cb(null, true);
 }
 
-// Set the storage destination and filename of the uploaded pictures
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, './uploads')
+var storageS3 = multer.memoryStorage({
+  destination: function(req, file, cb) {
+    cb(null, '');
   },
   filename: function (req, file, cb) {
   let filename = file.originalname.replace(/ /g,"_");
     cb(null, filename)
   }
-})
+});
 
 // Set up the multer module
-const upload = multer({
-  storage: storage,
+const uploadS3 = multer({
+  storage: storageS3,
   fileFilter,
   limits: {
     fileSize: 5000000
   }
 })
 
-app.post('/upload', [authJwt.verifyToken], upload.single('file'), pictureController.uploadPicture);
+app.post('/upload', [authJwt.verifyToken], uploadS3.single('file'), pictureController.uploadPictureS3);
 
 // Sending back errors in case of wrong filetype or big file
 app.use((err, req, res, next) => {

@@ -1,3 +1,4 @@
+/* eslint-disable import/no-extraneous-dependencies */
 <template>
   <div class="px-4 py-2">
     <Alerts :alerts="alerts"/>
@@ -33,7 +34,7 @@
                 />
               </div>
               <div class="flex-1 relative mt-1" v-if="imgSrc !== ''">
-                <p class="preview-label">Preview</p>
+                <p class="preview-label">Prévisualisation</p>
                 <div class="preview overflow-hidden w-full" />
               </div>
             </section>
@@ -142,7 +143,6 @@
 <script>
 import axios from 'axios';
 import VueCropper from 'vue-cropperjs';
-// eslint-disable-next-line import/no-extraneous-dependencies
 import 'cropperjs/dist/cropper.css';
 import authHeader from '../services/authHeader';
 import Alerts from '@/components/Alerts.vue';
@@ -234,32 +234,37 @@ export default {
 
     // Submit the image and upload it on the server
     async onSubmit() {
-      await this.$refs.cropper.getCroppedCanvas().toBlob(async (blob) => {
-        // Image verfication : extension and size
-        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+      if (typeof this.$refs.cropper === 'undefined') {
+        // If undefined, means the post is updated without uploading a new picture
+        this.$emit('uploadedFile', false);
+      } else {
+        await this.$refs.cropper.getCroppedCanvas().toBlob(async (blob) => {
+          // Image verfication : extension and size
+          const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
 
-        const file = this.$refs.input.files[0];
-        this.file = file;
-        if (!allowedTypes.includes(file.type)) {
-          this.alerts.push({ message: 'Seules les images sont acceptées', hasError: true });
-        }
-        if (file.size > 5000000) {
-          this.alerts.push({ message: 'L\'image dépasse 500 kb', hasError: true });
-        }
+          const file = this.$refs.input.files[0];
+          this.file = file;
+          if (!allowedTypes.includes(file.type)) {
+            this.alerts.push({ message: 'Seules les images sont acceptées', hasError: true });
+          }
+          if (file.size > 5000000) {
+            this.alerts.push({ message: 'L\'image dépasse 500 kb', hasError: true });
+          }
 
-        const formData = new FormData();
+          const formData = new FormData();
 
-        // Pass the image file name as the third parameter if necessary.
-        formData.append('file', blob, this.file.name);
+          // Pass the image file name as the third parameter if necessary.
+          formData.append('file', blob, this.file.name);
 
-        try {
-          await axios.post('/api/upload', formData, { headers: authHeader() });
-          this.alerts.push({ message: 'Image sauvegardée', hasError: false });
-          this.$emit('uploadedFile', this.file.name);
-        } catch (err) {
-          this.alerts.push({ message: err.response.data.error, hasError: true });
-        }
-      });
+          try {
+            await axios.post(`${process.env.VUE_APP_API_ENTRY_URL}/upload`, formData, { headers: authHeader() });
+            this.alerts.push({ message: 'Image sauvegardée', hasError: false });
+            this.$emit('uploadedFile', this.file.name);
+          } catch (err) {
+            this.alerts.push({ message: err.response.data.error, hasError: true });
+          }
+        });
+      }
     },
   },
 };

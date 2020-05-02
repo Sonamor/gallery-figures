@@ -73,6 +73,7 @@ export default {
   body {
     font-family: 'Roboto', sans-serif;
     background: #2d3748;
+    background-image: url('assets/bg.jpg');
   }
   a {
     color: #0094FF;
