@@ -8,7 +8,6 @@ const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const cors = require('cors');
-const flash = require('connect-flash');
 const bodyParser = require("body-parser");
 
 if (process.env.NODE_ENV !== 'production') {
@@ -39,8 +38,6 @@ app.use(history({
   verbose: true
 }))
 app.use(express.static(path.join(__dirname, 'public')));
-
-app.use(flash());
 
 // Use the routes and add prefix api
 app.use('/api', routes);
