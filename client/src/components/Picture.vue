@@ -17,11 +17,11 @@
           <div class="w-full font-bold m-1 text-gray-900 mx-2" v-if="mode === 'edit'">Image remplacée</div>
         </div>
       </div>
-      <div v-bind:class="['lb-information flex-1 xl:max-w-md lg:max-w-xs w-full border border-solid border-gray-300 p-4 overflow-auto rounded-r relative', (picture.active === false ? 'bg-red-300': 'bg-white')]" v-if="(typeof this.picture !== 'undefined')">
+      <div v-bind:class="['lb-information flex-1 xl:max-w-md lg:max-w-xs w-full border border-solid border-gray-300 md:p-4 p-1 pt-4 overflow-auto rounded-r relative', (picture.active === false ? 'bg-red-300': 'bg-white')]" v-if="(typeof this.picture !== 'undefined')">
         <button class="py-1 px-2 text-xs absolute top-0 right-0 hover:text-blue-700" v-if="loggedIn && mode === 'show' && picture" @click="editPicture(picture.id)">
           Modifier
         </button>
-        <span class="lightbox-title block w-full text-center font-bold text-4xl" v-if="mode === 'show' && picture && picture.title">{{ picture.title }}</span>
+        <span class="lightbox-title block w-full text-center font-bold md:text-4xl sm:text-2xl" v-if="mode === 'show' && picture && picture.title">{{ picture.title }}</span>
         <p id="pic_information" class="mt-4" v-if="picture && picture.information && mode === 'show'" v-html="picture.information"></p>
         <form v-if="['edit', 'add'].includes(mode)" class="relative min-h-full" @submit.prevent="onSubmit" ref="pictureForm">
           <input type="hidden" v-model="pic_filename">

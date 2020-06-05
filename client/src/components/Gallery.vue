@@ -6,8 +6,8 @@
     <div class="gallery">
       <div class="rounded overflow-hidden shadow-lg" v-show="loggedIn != false">
         <router-link to="/picture/add" @click.self="addPicture">
-          <div class="bg-white p-16 hover:bg-gray-400">
-            <img src="../assets/icons/xl-plus.png" class="lg-plus" title="Ajouter une image" alt="Ajouter une image">
+          <div class="bg-white p-12 md:p-16 hover:bg-gray-400">
+            <img src="../assets/icons/xl-plus.png" title="Ajouter une image" alt="Ajouter une image">
           </div>
         </router-link>
       </div>
@@ -156,6 +156,19 @@ export default {
   padding: 0;
   max-width: 80%;
 }
+
+@media (max-width: 600px){
+  .gallery{
+    display: block;
+  }
+}
+
+@media (max-width: 600px){
+  .gallery__item{
+    margin-top:1em;
+  }
+}
+
 .gallery__img {
   display: block;
   object-fit: cover;
@@ -169,11 +182,6 @@ export default {
 .gallery__item.large {
   grid-column-end: span 3;
   grid-row-end: span 3;
-}
-
-.lg-plus{
-  width:64px;
-  height:64px;
 }
 
 .gallery__actions{

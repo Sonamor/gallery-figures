@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <div class="mb-24">
+    <div class="mb-24 container">
       <router-link to="/">
         <div class="main_logo"></div>
       </router-link>
@@ -74,6 +74,7 @@ export default {
     font-family: 'Roboto', sans-serif;
     background: #2d3748;
     background-image: url('assets/bg.jpg');
+    background-size: cover;
   }
   a {
     color: #0094FF;
@@ -83,16 +84,59 @@ export default {
 
   .main_logo{
     position: absolute;
-    left:20px;
-    top: 30px;
     height:62px;
-    width:565px;
+    width:100vw;
     background: url('./assets/logo.png');
+    background-size:cover;
     cursor:pointer;
+  }
+
+  .main_logo{
+    left:0px;
+    top: 10px;
+  }
+
+  @media screen and (max-width: 320px) {
+    .main_logo{
+      height: 35px;
+    }
+  }
+
+  @media screen and (min-width: 321px) and (max-width: 375px) {
+    .main_logo{
+      height: 41px;
+    }
+  }
+
+  @media screen and (min-width: 376px) and (max-width: 425px) {
+    .main_logo{
+      height: 46px;
+    }
+  }
+
+  @media screen and (min-width: 640px) {
+    .main_logo{
+      max-width: 565px;
+      left:20px;
+      top: 35px;
+    }
+  }
+
+  @media screen and (max-width: 640px) {
+
+    .navigation{
+      right:0px !important;
+      top: 50px !important;
+    }
+
+    .container {
+      margin-bottom: 90px !important;
+    }
   }
 
   .navigation{
     right:25px;
     top: 5px;
   }
+
 </style>
