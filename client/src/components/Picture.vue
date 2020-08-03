@@ -324,4 +324,14 @@ ul{
 ol{
   list-style:decimal !important;
 }
+
+#pic_information h3{
+  font-size:25px;
+  font-weight: bold;
+  margin-bottom:10px;
+}
+
+#pic_information p{
+  margin-bottom: 5px;
+}
 </style>
