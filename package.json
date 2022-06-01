@@ -43,7 +43,7 @@
     "passport-local-mongoose": "^6.0.1",
     "pug": "^2.0.4",
     "resize-optimize-images": "^1.1.0",
-    "sharp": "^0.25.2"
+    "sharp": "^0.30.5"
   },
   "devDependencies": {
     "eslint": "^6.0.1",
